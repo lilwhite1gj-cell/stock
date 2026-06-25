@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>库存管理系统 - OEM嘴贴/鼻贴专版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body { background-color: #f8fafc; font-family: 'Inter', -apple-system, sans-serif; }
+        .nav-item { display: flex; align-items: center; padding: 0.8rem 1.25rem; color: #cbd5e1; transition: 0.2s; cursor: pointer; border-radius: 12px; margin: 0.2rem 0.75rem; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: #6366f1; color: white; box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+        .glass-card { background: white; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-radius: 20px; }
+        .page-enter { animation: slideUp 0.4s ease-out forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .modal-scroll { max-height: 70vh; overflow-y: auto; padding-right: 4px; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-slate-800">
+    <!-- 通知中心 -->
+    <div id="toast" class="hidden fixed top-6 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-full shadow-2xl transition-all duration-300 font-bold text-sm flex items-center"></div>
+
+    <!-- 1. 侧边栏 (Desktop) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 flex flex-col">
+        <div class="p-6 flex items-center space-x-3 border-b border-slate-800">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-900/20"><i data-lucide="package" class="text-white"></i></div>
+            <div>
+                <h1 class="text-white font-black tracking-tight">库存专家</h1>
+                <p id="roleDisplay" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest"></p>
+            </div>
+        </div>
+        <div class="mt-6 flex-1 space-y-1">
+            <div onclick="showPage('dashboard')" id="nav-dashboard" class="nav-item active"><i data-lucide="layout-grid" class="w-5 h-5 mr-3"></i> 仪表盘看板</div>
+            <div onclick="showPage('inventory')" id="nav-inventory" class="nav-item"><i data-lucide="box" class="w-5 h-5 mr-3"></i> 库存台账</div>
+            <div onclick="showPage('transactions')" id="nav-transactions" class="nav-item"><i data-lucide="refresh-ccw" class="w-5 h-5 mr-3"></i> 收发流水</div>
+            <div onclick="showPage('settings')" id="nav-settings" class="nav-item"><i data-lucide="user" class="w-5 h-5 mr-3"></i> 账号设置</div>
+            <div onclick="downloadBackup()" id="nav-backup" class="admin-only hidden nav-item text-amber-400"><i data-lucide="database" class="w-5 h-5 mr-3"></i> 数据备份</div>
+        </div>
+        <div class="p-4 border-t border-slate-800">
+            <button onclick="logout()" class="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-slate-800 hover:bg-red-600/20 hover:text-red-500 text-slate-400 rounded-xl transition-all font-bold text-sm">
+                <i data-lucide="log-out" class="w-4 h-4"></i><span>退出登录</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- 2. 手机端遮罩 -->
+    <div id="sidebarOverlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden"></div>
+
+    <!-- 3. 主内容区 -->
+    <div class="flex-1 flex flex-col min-w-0 bg-slate-50 relative">
+        <!-- 移动端顶部标题 -->
+        <header class="md:hidden bg-white border-b p-4 flex justify-between items-center z-30">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center"><i data-lucide="package" class="text-white w-4 h-4"></i></div>
+                <span class="font-black text-slate-900">库存专家</span>
+            </div>
+            <button onclick="toggleSidebar()" class="p-2 bg-slate-100 rounded-lg text-slate-600"><i data-lucide="menu" class="w-5 h-5"></i></button>
+        </header>
+
+        <main id="mainContainer" class="flex-1 overflow-y-auto p-4 md:p-10">
+            <!-- A. 登录页 -->
+            <div id="page-login" class="min-h-full flex items-center justify-center p-2">
+                <div class="w-full max-w-sm bg-white p-8 rounded-[32px] shadow-2xl shadow-indigo-200/50 border border-indigo-50">
+                    <div class="text-center mb-10">
+                        <div class="w-16 h-16 bg-indigo-600 rounded-3xl flex items-center justify-center shadow-xl shadow-indigo-200 mx-auto mb-4"><i data-lucide="shield-check" class="text-white w-8 h-8"></i></div>
+                        <h2 id="authTitle" class="text-2xl font-black text-slate-900">欢迎回来</h2>
+                        <p class="text-slate-400 text-sm mt-1">请输入您的凭据以进入系统</p>
+                    </div>
+                    <div class="space-y-4">
+                        <div id="authError" class="hidden bg-red-50 text-red-600 p-3 rounded-2xl text-xs font-bold border border-red-100 text-center"></div>
+                        <div id="authSuccess" class="hidden bg-emerald-50 text-emerald-600 p-3 rounded-2xl text-xs font-bold border border-emerald-100 text-center"></div>
+                        <input type="text" id="username" class="w-full px-5 py-4 bg-slate-50 border-0 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="用户名">
+                        <input type="password" id="password" class="w-full px-5 py-4 bg-slate-50 border-0 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="登录密码">
+                        <div id="loginGroup" class="pt-2">
+                            <button onclick="login()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all">登 录</button>
+                            <button onclick="toggleAuth(true)" class="w-full mt-4 text-slate-400 font-bold text-sm hover:text-indigo-600">没有账号？立即注册</button>
+                        </div>
+                        <div id="regGroup" class="hidden pt-2">
+                            <button onclick="register()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-emerald-700 shadow-xl shadow-emerald-100 transition-all">创建新账号</button>
+                            <button onclick="toggleAuth(false)" class="w-full mt-4 text-slate-400 font-bold text-sm hover:text-indigo-600">已有账号？返回登录</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- B. 系统主体容器 -->
+            <div id="app-content" class="hidden space-y-8 pb-10">
+                <!-- 1. 仪表盘 -->
+                <div id="page-dashboard" class="page-content hidden space-y-8">
+                    <div class="flex items-center justify-between"><h2 class="text-3xl font-black text-slate-900 tracking-tight">业务大盘</h2><span id="perfTag" class="px-3 py-1 bg-white border border-slate-200 text-slate-500 rounded-full text-[10px] font-black uppercase"></span></div>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8" id="statCards"></div>
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                        <div class="xl:col-span-2 glass-card p-6 md:p-8"><h3 class="text-lg font-black mb-6 text-slate-700 flex items-center"><i data-lucide="chart-pie" class="mr-2 text-indigo-500"></i>各款式库存分布</h3><div class="h-[300px] md:h-[450px]"><canvas id="productChart"></canvas></div></div>
+                        <div class="glass-card p-6 md:p-8"><h3 class="text-lg font-black mb-6 text-slate-700 flex items-center" id="rankTitle"><i data-lucide="award" class="mr-2 text-orange-400"></i>员工业绩榜</h3><div id="perfList" class="space-y-4"></div></div>
+                    </div>
+                </div>
+
+                <!-- 2. 库存台账 -->
+                <div id="page-inventory" class="page-content hidden space-y-6">
+                    <div class="flex justify-between items-center"><h2 class="text-3xl font-black text-slate-900">库存台账</h2><button onclick="openModal('prodModal')" class="bg-indigo-600 text-white p-4 rounded-2xl shadow-xl shadow-indigo-100 hover:scale-105 active:scale-95 transition-all"><i data-lucide="plus" class="w-6 h-6"></i></button></div>
+                    <div class="flex bg-white p-2 rounded-2xl border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-500 transition-all"><i data-lucide="search" class="m-3 text-slate-400"></i><input type="text" id="invSearch" oninput="renderInventory()" placeholder="搜索产品、货号、规格..." class="flex-1 bg-transparent outline-none font-medium"></div>
+                    <div class="hidden md:block glass-card overflow-hidden"><table class="w-full text-left"><thead class="bg-slate-50 border-b border-slate-100"><tr><th class="p-6 text-xs font-bold text-slate-400">款式</th><th class="p-6 text-xs font-bold text-slate-400">货号 SKU</th><th class="p-6 text-xs font-bold text-slate-400">产品名称</th><th class="p-6 text-xs font-bold text-slate-400">规格/材质</th><th class="p-6 text-right text-xs font-bold text-slate-400">结余</th></tr></thead><tbody id="invTable" class="divide-y divide-slate-50"></tbody></table></div>
+                    <div id="invMobile" class="md:hidden space-y-4"></div>
+                </div>
+
+                <!-- 3. 收发流水 -->
+                <div id="page-transactions" class="page-content hidden space-y-6">
+                    <div class="flex justify-between items-center"><h2 class="text-3xl font-black text-slate-900">收发明细</h2><button onclick="openModal('transModal')" class="bg-indigo-600 text-white px-6 py-4 rounded-2xl shadow-xl font-black flex items-center hover:bg-indigo-700"><i data-lucide="plus-circle" class="w-5 h-5 mr-2"></i>记一笔</button></div>
+                    <div id="transList" class="space-y-4"></div>
+                </div>
+
+                <!-- 4. 账号设置 -->
+                <div id="page-settings" class="page-content hidden">
+                    <h2 class="text-3xl font-black text-slate-900 mb-8">个人设置</h2>
+                    <div class="max-w-md glass-card p-8 space-y-6">
+                        <h3 class="font-black text-slate-700">修改安全密码</h3>
+                        <div class="space-y-4">
+                            <input type="password" id="oldPass" placeholder="当前密码" class="w-full bg-slate-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500">
+                            <input type="password" id="newPass" placeholder="新密码" class="w-full bg-slate-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500">
+                            <button onclick="changePass()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black hover:bg-black transition-all">更新并保存</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="prodModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+        <div class="bg-white w-full max-w-lg rounded-[40px] p-8 md:p-10 shadow-2xl animate-in fade-in zoom-in duration-300">
+            <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-slate-900">新增款式</h3><button onclick="closeModal('prodModal')" class="p-2 bg-slate-100 rounded-full"><i data-lucide="x"></i></button></div>
+            <div class="space-y-5 modal-scroll">
+                <input type="text" id="pName" placeholder="产品名称" class="w-full bg-slate-50 p-4 rounded-2xl border-0 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <input type="text" id="pSku" placeholder="货号 SKU" class="w-full bg-slate-50 p-4 rounded-2xl border-0 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <div class="grid grid-cols-2 gap-4"><input type="text" id="pSpec" placeholder="规格" class="bg-slate-50 p-4 rounded-2xl border-0"><input type="text" id="pMat" placeholder="材质" class="bg-slate-50 p-4 rounded-2xl border-0"></div>
+                <div class="p-6 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50 text-center"><label class="block text-xs font-black text-slate-400 mb-2 uppercase">上传款式图片</label><input type="file" id="pImage" accept="image/*" class="text-xs w-full"></div>
+                <button onclick="doSaveProduct()" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-indigo-100 mt-4">确认创建</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="transModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+        <div class="bg-white w-full max-w-lg rounded-[40px] p-8 md:p-10 shadow-2xl animate-in fade-in zoom-in duration-300">
+            <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-slate-900">录入流水</h3><button onclick="closeModal('transModal')" class="p-2 bg-slate-100 rounded-full"><i data-lucide="x"></i></button></div>
+            <div class="space-y-5 modal-scroll">
+                <div class="p-4 bg-indigo-600 text-white rounded-2xl flex items-center justify-between shadow-lg"><label class="font-black text-sm">这是一个从未录入过的新产品？</label><input type="checkbox" id="isNew" class="w-6 h-6 rounded-lg accent-white" onchange="toggleQuickFields()"></div>
+                <div id="oldPBox"><select id="tProd" class="w-full bg-slate-50 p-4 rounded-2xl border-0 outline-none focus:ring-2 focus:ring-indigo-500"></select></div>
+                <div id="newPBox" class="hidden space-y-4 p-5 bg-slate-50 rounded-3xl border border-slate-100">
+                    <input type="text" id="qName" placeholder="新产品名称" class="w-full bg-white p-3 rounded-xl border-0 shadow-sm"><input type="text" id="qSku" placeholder="货号" class="w-full bg-white p-3 rounded-xl border-0 shadow-sm"><div class="grid grid-cols-2 gap-2"><input type="text" id="qSpec" placeholder="规格" class="p-3 bg-white rounded-xl border-0 shadow-sm"><input type="text" id="qMat" placeholder="材质" class="p-3 bg-white rounded-xl border-0 shadow-sm"></div><input type="file" id="qImage" class="text-[10px]">
+                </div>
+                <div class="grid grid-cols-2 gap-4"><input type="text" id="tOrder" placeholder="订单编号" class="bg-slate-50 p-4 rounded-2xl border-0 outline-none"><input type="text" id="tLog" placeholder="物流单号" class="bg-slate-50 p-4 rounded-2xl border-0 outline-none"></div>
+                <div class="flex space-x-4"><select id="tType" class="flex-1 bg-slate-50 p-4 rounded-2xl font-black border-0"><option value="in">入库 (+)</option><option value="out">出库 (-)</option></select><input type="number" id="tQty" placeholder="数量" class="flex-1 bg-slate-50 p-4 rounded-2xl font-black border-0"></div>
+                <textarea id="tNotes" placeholder="填写备注信息..." class="w-full bg-slate-50 p-4 rounded-2xl h-24 border-0 outline-none"></textarea>
+                <button onclick="doSaveTrans()" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black text-lg shadow-xl mt-4">确认记账</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const api = axios.create({ baseURL: '/api' });
+        api.interceptors.request.use(config => {
+            const token = localStorage.getItem('token');
+            if (token) config.headers.Authorization = `Bearer ${token}`;
+            return config;
+        });
+
+        let currentUser = JSON.parse(localStorage.getItem('user'));
+        let products = [], chart = null;
+
+        function initApp() {
+            lucide.createIcons();
+            if (currentUser) {
+                document.getElementById('page-login').classList.add('hidden');
+                document.getElementById('app-content').classList.remove('hidden');
+                document.getElementById('roleDisplay').innerText = currentUser.role === 'admin' ? '最高管理员' : '销售专员';
+                if (currentUser.role === 'admin') {
+                    document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+                }
+                showPage('dashboard');
+            } else {
+                document.getElementById('page-login').classList.remove('hidden');
+            }
+        }
+
+        async function login() {
+            try {
+                const res = await api.post('/login', { username: username.value, password: password.value });
+                localStorage.setItem('token', res.data.token);
+                localStorage.setItem('user', JSON.stringify(res.data.user));
+                location.reload();
+            } catch (e) { toast('❌ 登录失败，请检查用户名或密码', 'bg-red-500'); }
+        }
+
+        async function register() {
+            try {
+                await api.post('/register', { username: username.value, password: password.value });
+                toast('✅ 注册成功！即将切换至登录', 'bg-emerald-500');
+                setTimeout(() => toggleAuth(false), 2000);
+            } catch (e) { toast('❌ 注册失败: ' + (e.response?.data?.message || '名称占用'), 'bg-red-500'); }
+        }
+
+        function toggleAuth(isReg) {
+            document.getElementById('authTitle').innerText = isReg ? '欢迎加入' : '欢迎回来';
+            document.getElementById('loginGroup').classList.toggle('hidden', isReg);
+            document.getElementById('regGroup').classList.toggle('hidden', !isReg);
+        }
+
+        function toggleSidebar() {
+            const s = document.getElementById('sidebar');
+            const o = document.getElementById('sidebarOverlay');
+            const isOpen = !s.classList.contains('-translate-x-full');
+            s.classList.toggle('-translate-x-full', isOpen);
+            o.classList.toggle('hidden', isOpen);
+        }
+
+        async function showPage(id) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(`page-${id}`).classList.remove('hidden');
+            document.getElementById(`nav-${id}`).classList.add('active');
+            document.getElementById(`page-${id}`).classList.add('page-enter');
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+                document.getElementById('sidebarOverlay').classList.add('hidden');
+            }
+            if (id === 'dashboard') loadDash();
+            if (id === 'inventory') renderInventory();
+            if (id === 'transactions') renderTrans();
+        }
+
+        async function loadDash() {
+            const res = await api.get('/dashboard-stats');
+            const { productMix, performance, leaderboard } = res.data;
+            const items = [
+                { t: '累计出货', v: performance.totalOut, c: 'text-rose-500', bg: 'bg-rose-50', i: 'truck' },
+                { t: '累计入库', v: performance.totalIn, c: 'text-emerald-500', bg: 'bg-emerald-50', i: 'download' },
+                { t: '业务规模', v: performance.transCount, c: 'text-indigo-500', bg: 'bg-indigo-50', i: 'activity' },
+                { t: '在管款式', v: performance.activeSkus, c: 'text-amber-500', bg: 'bg-amber-50', i: 'layers' }
+            ];
+            document.getElementById('statCards').innerHTML = items.map(c => `
+                <div class="glass-card p-5 md:p-7 relative overflow-hidden group hover:shadow-xl transition-all">
+                    <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform"><i data-lucide="${c.i}" class="w-24 h-24"></i></div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${c.t}</p>
+                    <p class="text-2xl md:text-3xl font-black mt-2 ${c.c}">${c.v}</p>
+                </div>`).join('');
+
+            const ctx = document.getElementById('productChart').getContext('2d');
+            if (chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: productMix.map(p => p.name),
+                    datasets: [{ data: productMix.map(p => p.balance), backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#0ea5e9'], borderWidth: 8, borderColor: '#ffffff', hoverOffset: 20 }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { position: window.innerWidth < 768 ? 'bottom' : 'right', labels: { boxWidth: 10, usePointStyle: true, font: { weight: '600' } } } }, cutout: '75%' }
+            });
+
+            document.getElementById('perfTag').innerText = currentUser.role === 'admin' ? '全员绩效汇总' : '我个人的成绩单';
+            if (currentUser.role === 'admin') {
+                document.getElementById('rankTitle').innerHTML = '<i data-lucide="medal" class="mr-2 text-amber-500"></i> 出货排行榜';
+                document.getElementById('perfList').innerHTML = leaderboard.map((u, i) => `
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div class="flex items-center"><span class="w-7 h-7 flex items-center justify-center ${i==0?'bg-amber-400':'bg-slate-200'} text-white text-[10px] rounded-full mr-3 font-black">${i+1}</span><span class="font-bold text-slate-700">${u.username}</span></div>
+                        <span class="font-black text-slate-900">${u.totalOut} <small class="text-slate-400 font-normal">PCS</small></span>
+                    </div>`).join('');
+            } else {
+                document.getElementById('rankTitle').innerHTML = '<i data-lucide="star" class="mr-2 text-indigo-500"></i> 工作统计';
+                document.getElementById('perfList').innerHTML = `<div class="p-8 bg-indigo-50 rounded-3xl border border-indigo-100 text-center"><p class="text-[10px] font-black text-indigo-400 uppercase mb-2">当前管理款式数</p><p class="text-5xl font-black text-indigo-700">${performance.activeSkus}</p></div>`;
+            }
+            lucide.createIcons();
+        }
+
+        async function renderInventory() {
+            const res = await api.get('/inventory');
+            products = res.data;
+            const term = invSearch.value.toLowerCase();
+            const filtered = products.filter(p => p.name.toLowerCase().includes(term) || p.sku.toLowerCase().includes(term) || (p.spec && p.spec.toLowerCase().includes(term)));
+            
+            invTable.innerHTML = filtered.map(p => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="p-6">${p.image ? `<img src="${p.image}" class="w-12 h-12 object-cover rounded-xl shadow-sm hover:scale-[2.5] transition-transform cursor-zoom-in">` : '<div class="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-[10px] text-slate-400">无图</div>'}</td>
+                    <td class="p-6 font-mono text-sm font-bold text-slate-500">${p.sku}</td>
+                    <td class="p-6 font-black text-slate-800">${p.name}</td>
+                    <td class="p-6 text-sm text-slate-400">${p.spec || '-'}<br><span class="text-[10px] font-bold text-slate-300 uppercase">${p.material || '-'}</span></td>
+                    <td class="p-6 text-right font-black text-xl text-indigo-600">${p.balance}</td>
+                </tr>`).join('');
+
+            invMobile.innerHTML = filtered.map(p => `
+                <div class="glass-card p-4 flex items-center space-x-4">
+                    <div class="flex-shrink-0">${p.image ? `<img src="${p.image}" class="w-16 h-16 object-cover rounded-2xl shadow-sm">` : '<div class="w-16 h-16 bg-slate-50 rounded-2xl border border-dashed flex items-center justify-center text-[10px] text-slate-300">无图</div>'}</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[10px] font-black text-indigo-500 font-mono">${p.sku}</p>
+                        <h4 class="font-black text-slate-800 truncate">${p.name}</h4>
+                        <p class="text-[10px] text-slate-400">${p.spec || '无规格'} | ${p.material || '无材质'}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-black text-slate-300 uppercase">存货</p>
+                        <p class="text-2xl font-black text-indigo-600">${p.balance}</p>
+                    </div>
+                </div>`).join('');
+            
+            tProd.innerHTML = '<option value="">请选择产品...</option>' + products.map(p => `<option value="${p.id}">${p.sku} - ${p.name}</option>`).join('');
+        }
+
+        async function renderTrans() {
+            const res = await api.get('/transactions');
+            const data = res.data;
+            transList.innerHTML = data.slice().reverse().map(t => {
+                const p = products.find(prod => prod.id === t.productId);
+                const isIn = t.type === 'in';
+                return `
+                    <div class="glass-card p-5 border-l-[6px] ${isIn ? 'border-emerald-500' : 'border-rose-500'} transition-all hover:shadow-md">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${new Date(t.date).toLocaleString()}</span>
+                            <span class="px-3 py-1 rounded-full text-[10px] font-black ${isIn ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}">${isIn ? '入库' : '出库'}</span>
+                        </div>
+                        <h4 class="font-black text-slate-800 text-lg">${p ? p.name : '已下架'}</h4>
+                        <div class="flex justify-between items-end mt-4">
+                            <div class="space-y-1">
+                                <p class="text-[10px] text-slate-400 font-bold">订单: <span class="text-slate-900">${t.orderNo || '-'}</span></p>
+                                <p class="text-[10px] text-slate-400 font-bold">物流: <span class="text-indigo-600">${t.logisticsNo || '-'}</span></p>
+                            </div>
+                            <div class="text-right"><p class="text-xs text-slate-400 font-black uppercase mb-0.5">数量</p><p class="text-3xl font-black ${isIn ? 'text-emerald-600' : 'text-rose-600'}">${t.quantity}</p></div>
+                        </div>
+                        ${t.notes ? `<div class="mt-4 pt-4 border-t border-slate-50 text-[11px] text-slate-400 italic">备注: ${t.notes}</div>` : ''}
+                    </div>`;
+            }).join('');
+        }
+
+        async function doSaveProduct() {
+            const fd = new FormData();
+            fd.append('name', pName.value); fd.append('sku', pSku.value);
+            fd.append('spec', pSpec.value); fd.append('material', pMat.value);
+            if (pImage.files[0]) fd.append('image', pImage.files[0]);
+            try {
+                await api.post('/products', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+                toast('✅ 款式创建成功', 'bg-emerald-500');
+                closeModal('prodModal'); renderInventory();
+            } catch (e) { toast('❌ 录入失败，请检查字段', 'bg-red-500'); }
+        }
+
+        async function doSaveTrans() {
+            let pid = tProd.value;
+            if (document.getElementById('isNew').checked) {
+                const fd = new FormData();
+                fd.append('name', qName.value); fd.append('sku', qSku.value);
+                fd.append('spec', qSpec.value); fd.append('material', qMat.value);
+                if (qImage.files[0]) fd.append('image', qImage.files[0]);
+                try {
+                    const r = await api.post('/products', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+                    pid = r.data.id;
+                } catch (e) { toast('❌ 新产品建档失败', 'bg-red-500'); return; }
+            }
+            if (!pid) { toast('⚠️ 请选择产品', 'bg-amber-500'); return; }
+            try {
+                await api.post('/transactions', { productId: pid, type: tType.value, quantity: tQty.value, notes: tNotes.value, orderNo: tOrder.value, logisticsNo: tLog.value });
+                toast('✅ 记账成功！', 'bg-emerald-500');
+                closeModal('transModal'); renderTrans();
+            } catch (e) { toast('❌ 流水提交失败', 'bg-red-500'); }
+        }
+
+        async function changePass() {
+            try {
+                await api.post('/change-password', { oldPassword: oldPass.value, newPassword: newPass.value });
+                toast('✅ 密码已成功更新', 'bg-emerald-500');
+                oldPass.value = ''; newPass.value = '';
+            } catch (e) { toast('❌ 修改失败: 原密码错误', 'bg-red-500'); }
+        }
+
+        async function downloadBackup() {
+            const btn = document.getElementById('nav-backup');
+            const original = btn.innerHTML;
+            try {
+                btn.innerHTML = '<i data-lucide="loader" class="w-5 h-5 mr-3 animate-spin"></i> 正在备份...';
+                lucide.createIcons();
+                const r = await axios({ url: '/api/backup', method: 'GET', responseType: 'blob', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+                const url = window.URL.createObjectURL(new Blob([r.data]));
+                const link = document.createElement('a'); link.href = url;
+                link.setAttribute('download', `库存备份_${new Date().toLocaleDateString()}.json`);
+                document.body.appendChild(link); link.click();
+                toast('✅ 备份下载已开始', 'bg-emerald-600');
+            } catch (e) { toast('❌ 备份权限不足', 'bg-red-500'); }
+            btn.innerHTML = original; lucide.createIcons();
+        }
+
+        function toast(msg, bg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.className = `fixed top-6 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-full shadow-2xl transition-all duration-300 font-black text-sm text-white ${bg}`;
+            t.classList.remove('hidden', 'opacity-0', '-translate-y-full');
+            setTimeout(() => { t.classList.add('opacity-0', '-translate-y-full'); setTimeout(() => t.classList.add('hidden'), 300); }, 3000);
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function toggleQuickFields() {
+            const isNew = document.getElementById('isNew').checked;
+            document.getElementById('oldPBox').classList.toggle('hidden', isNew);
+            document.getElementById('newPBox').classList.toggle('hidden', !isNew);
+        }
+
+        function logout() { localStorage.clear(); location.reload(); }
+
+        initApp();
+    </script>
+</body>
+</html>

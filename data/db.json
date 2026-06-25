@@ -1,0 +1,84 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "username": "admin",
+      "password": "$2b$10$iRdxfxr8AY4CgvDmNlZ6COp3ZXGMsjN0/jZOCsT0s5XQbeVbaKqz.",
+      "role": "admin"
+    },
+    {
+      "id": "2",
+      "username": "staff",
+      "password": "$2b$10$8Z7IYA.oV4yF5q6/oia6BOe3pkK.jAXIlFPJ22J6ViT3CIHE6aTQi",
+      "role": "staff"
+    }
+  ],
+  "products": [
+    {
+      "id": "1782371987576",
+      "name": "新嘴贴",
+      "sku": "1",
+      "category": "自动录入",
+      "image": null,
+      "createdBy": "1"
+    },
+    {
+      "id": "1782373318618",
+      "name": "123",
+      "sku": "234",
+      "category": "快速建档",
+      "spec": "123",
+      "material": "543",
+      "image": "/uploads/1782373318613.jpg",
+      "createdBy": "1"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "1782371987585",
+      "productId": "1782371987576",
+      "type": "in",
+      "quantity": 100,
+      "userId": "1",
+      "username": "admin",
+      "date": "2026-06-25T07:19:47.585Z",
+      "notes": ""
+    },
+    {
+      "id": "1782373318641",
+      "productId": "1782373318618",
+      "type": "in",
+      "quantity": 10,
+      "userId": "1",
+      "username": "admin",
+      "date": "2026-06-25T07:41:58.641Z",
+      "notes": "",
+      "orderNo": "12345",
+      "logisticsNo": "12345"
+    },
+    {
+      "id": "1782373960197",
+      "productId": "1782371987576",
+      "type": "out",
+      "quantity": 5,
+      "userId": "1",
+      "username": "admin",
+      "date": "2026-06-25T07:52:40.197Z",
+      "notes": "",
+      "orderNo": "1234",
+      "logisticsNo": "1234"
+    },
+    {
+      "id": "1782373980779",
+      "productId": "1782371987576",
+      "type": "out",
+      "quantity": 5,
+      "userId": "1",
+      "username": "admin",
+      "date": "2026-06-25T07:53:00.780Z",
+      "notes": "没有时间",
+      "orderNo": "1234",
+      "logisticsNo": "1234"
+    }
+  ]
+}
