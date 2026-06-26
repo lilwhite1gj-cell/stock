@@ -3,150 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>库存管理系统 - OEM嘴贴/鼻贴专版</title>
+    <title>库存专家 Pro - OEM库存管理</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-        body { background-color: #f8fafc; font-family: 'Inter', -apple-system, sans-serif; }
-        .nav-item { display: flex; align-items: center; padding: 0.8rem 1.25rem; color: #cbd5e1; transition: 0.2s; cursor: pointer; border-radius: 12px; margin: 0.2rem 0.75rem; }
-        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
-        .nav-item.active { background: #6366f1; color: white; box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
-        .glass-card { background: white; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-radius: 20px; }
-        .error-bubble { color: #e11d48; font-size: 10px; font-weight: 800; margin-top: 4px; }
-        .modal-scroll { max-height: 70vh; overflow-y: auto; padding-right: 4px; }
-        .clickable-row { cursor: pointer; transition: 0.2s; }
-        .clickable-row:hover { background-color: #f1f5f9 !important; transform: scale(1.002); }
+        body { background-color: #f8fafc; font-family: 'Inter', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* 1. 核心动效库 */
+        .nav-item { display: flex; align-items: center; padding: 0.8rem 1.25rem; color: #cbd5e1; transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border-radius: 14px; margin: 0.2rem 0.75rem; }
+        .nav-item:active { transform: scale(0.95); }
+        .nav-item.active { background: #6366f1; color: white; box-shadow: 0 10px 20px -5px rgba(99,102,241,0.4); }
+        
+        .glass-card { background: white; border: 1px solid rgba(241,245,249,0.8); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -2px rgba(0,0,0,0.02); border-radius: 24px; transition: all 0.3s ease; }
+        .clickable-row { cursor: pointer; }
+        .clickable-row:active { transform: scale(0.98); background-color: #f1f5f9 !important; }
+        
+        /* 页面切换动画 */
+        .page-enter { animation: pageIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes pageIn { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        
+        /* 弹窗抽屉化 (Mobile) */
+        @media (max-width: 768px) {
+            .modal-drawer { position: fixed; bottom: 0; left: 0; right: 0; width: 100%; border-radius: 32px 32px 0 0 !important; max-height: 92vh !important; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+            @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        }
+
+        .error-bubble { color: #e11d48; font-size: 10px; font-weight: 800; margin-top: 4px; animation: shake 0.4s ease; }
+        @keyframes shake { 0%,100% {transform:translateX(0)} 25% {transform:translateX(-4px)} 75% {transform:translateX(4px)} }
+        
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden text-slate-800">
-    <div id="toast" class="hidden fixed top-6 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-full shadow-2xl transition-all duration-300 font-bold text-sm flex items-center text-white text-center"></div>
+<body class="flex h-screen overflow-hidden text-slate-800 select-none">
+    <!-- 全局状态反馈 -->
+    <div id="toast" class="hidden fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] px-6 py-4 rounded-3xl shadow-2xl transition-all duration-500 font-black text-sm flex items-center text-white min-w-[280px] justify-center"></div>
 
-    <div id="imgPreviewOverlay" onclick="this.classList.add('hidden')" class="hidden fixed inset-0 z-[300] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 cursor-zoom-out">
-        <img id="imgPreviewContent" src="" class="max-w-full max-h-full rounded-2xl shadow-2xl border-4 border-white/10 animate-in zoom-in duration-300">
+    <!-- 全屏预览 -->
+    <div id="imgPreviewOverlay" onclick="this.classList.add('hidden')" class="hidden fixed inset-0 z-[400] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4">
+        <img id="imgPreviewContent" src="" class="max-w-full max-h-full rounded-3xl shadow-2xl border border-white/10 animate-in zoom-in-95 duration-300">
+        <div class="absolute bottom-10 text-white/30 text-[10px] font-bold uppercase tracking-widest">点击任意处退出</div>
     </div>
 
-    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 flex flex-col">
-        <div class="p-6 border-b border-slate-800 flex items-center space-x-3">
-            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg"><i data-lucide="package" class="text-white"></i></div>
-            <div><h1 class="text-white font-black tracking-tight text-lg">库存专家</h1><p id="roleDisplay" class="text-[10px] text-slate-500 font-bold uppercase"></p></div>
+    <!-- 侧边栏 (移动端优化) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-[100] w-72 bg-slate-900 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-500 cubic-bezier(0.16, 1, 0.3, 1) flex flex-col shadow-2xl">
+        <div class="p-8 border-b border-slate-800/50 flex items-center space-x-4">
+            <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20"><i data-lucide="package" class="text-white w-6 h-6"></i></div>
+            <div><h1 class="text-white font-black tracking-tighter text-xl">库存专家</h1><p id="roleDisplay" class="text-[10px] text-slate-500 font-black uppercase tracking-widest"></p></div>
         </div>
-        <div class="mt-6 flex-1 space-y-1 overflow-y-auto">
-            <div onclick="showPage('dashboard')" id="nav-dashboard" class="nav-item active"><i data-lucide="layout-grid" class="w-5 h-5 mr-3"></i> 仪表盘看板</div>
-            <div onclick="showPage('inventory')" id="nav-inventory" class="nav-item"><i data-lucide="box" class="w-5 h-5 mr-3"></i> 库存台账</div>
-            <div onclick="showPage('transactions')" id="nav-transactions" class="nav-item"><i data-lucide="refresh-ccw" class="w-5 h-5 mr-3"></i> 收发明细</div>
-            <div onclick="showPage('factories')" id="nav-factories" class="nav-item"><i data-lucide="factory" class="w-5 h-5 mr-3"></i> 工厂列表</div>
-            <div onclick="showPage('customers')" id="nav-customers" class="nav-item"><i data-lucide="users" class="w-5 h-5 mr-3"></i> 客户列表</div>
-            <div onclick="showPage('settings')" id="nav-settings" class="nav-item"><i data-lucide="settings" class="w-5 h-5 mr-3"></i> 账号设置</div>
+        <div class="mt-8 flex-1 space-y-1 overflow-y-auto px-2">
+            <div onclick="showPage('dashboard')" id="nav-dashboard" class="nav-item active"><i data-lucide="layout-grid" class="w-5 h-5 mr-4"></i> 仪表盘看板</div>
+            <div onclick="showPage('inventory')" id="nav-inventory" class="nav-item"><i data-lucide="box" class="w-5 h-5 mr-4"></i> 库存台账</div>
+            <div onclick="showPage('transactions')" id="nav-transactions" class="nav-item"><i data-lucide="refresh-ccw" class="w-5 h-5 mr-4"></i> 收发明细</div>
+            <div onclick="showPage('factories')" id="nav-factories" class="nav-item"><i data-lucide="factory" class="w-5 h-5 mr-4"></i> 工厂档案</div>
+            <div onclick="showPage('customers')" id="nav-customers" class="nav-item"><i data-lucide="users" class="w-5 h-5 mr-4"></i> 客户档案</div>
+            <div onclick="showPage('settings')" id="nav-settings" class="nav-item"><i data-lucide="settings" class="w-5 h-5 mr-4"></i> 系统设置</div>
         </div>
-        <div class="p-4 border-t border-slate-800"><button onclick="logout()" class="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-slate-800 hover:bg-red-600/20 text-slate-400 hover:text-red-500 rounded-xl transition-all font-bold text-sm"><i data-lucide="log-out" class="w-4 h-4"></i><span>退出登录</span></button></div>
+        <div class="p-6 border-t border-slate-800/50"><button onclick="logout()" class="w-full flex items-center justify-center space-x-3 py-4 bg-slate-800/50 text-slate-400 hover:text-red-400 rounded-2xl transition-all font-bold text-sm active:scale-95"><i data-lucide="log-out" class="w-4 h-4"></i><span>退出登录</span></button></div>
     </aside>
 
-    <div id="sidebarOverlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden"></div>
+    <div id="sidebarOverlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[90]"></div>
 
     <div class="flex-1 flex flex-col min-w-0 bg-slate-50 relative">
-        <header class="md:hidden bg-white border-b p-4 flex justify-between items-center z-30 shadow-sm">
-            <div class="flex items-center space-x-2"><div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg"><i data-lucide="package" class="text-white w-4 h-4"></i></div><span class="font-black text-slate-900">库存专家</span></div>
-            <button onclick="toggleSidebar()" class="p-2 bg-slate-100 rounded-lg text-slate-600"><i data-lucide="menu" class="w-5 h-5"></i></button>
+        <header class="md:hidden bg-white/80 backdrop-blur-md border-b border-slate-100 p-5 flex justify-between items-center z-[80] sticky top-0">
+            <div class="flex items-center space-x-3"><div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100"><i data-lucide="package" class="text-white w-5 h-5"></i></div><span class="font-black text-slate-900 tracking-tighter">库存专家</span></div>
+            <button onclick="toggleSidebar()" class="p-3 bg-slate-50 rounded-xl text-slate-600 active:scale-90 transition-transform"><i data-lucide="menu" class="w-6 h-6"></i></button>
         </header>
 
-        <main id="mainContainer" class="flex-1 overflow-y-auto p-4 md:p-10">
-            <!-- 登录页 -->
-            <div id="page-login" class="min-h-full flex items-center justify-center p-2">
-                <div class="w-full max-w-sm bg-white p-8 rounded-[32px] shadow-2xl border border-indigo-50">
-                    <div class="text-center mb-10"><div class="w-16 h-16 bg-indigo-600 rounded-3xl flex items-center justify-center shadow-xl mx-auto mb-4"><i data-lucide="shield-check" class="text-white w-8 h-8"></i></div><h2 id="authTitle" class="text-2xl font-black text-slate-900 tracking-tight">欢迎回来</h2></div>
+        <main id="mainContainer" class="flex-1 overflow-y-auto p-4 md:p-10 space-y-6">
+            <!-- 登录/注册 -->
+            <div id="page-login" class="min-h-[80vh] flex items-center justify-center">
+                <div class="w-full max-w-sm bg-white p-10 rounded-[40px] shadow-2xl border border-indigo-50/50">
+                    <div class="text-center mb-10"><div class="w-20 h-20 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-2xl shadow-indigo-200 mx-auto mb-6"><i data-lucide="shield-check" class="text-white w-10 h-10"></i></div><h2 id="authTitle" class="text-3xl font-black text-slate-900 tracking-tighter">欢迎回来</h2></div>
                     <div class="space-y-4" id="loginForm">
-                        <input type="text" id="username" class="w-full px-5 py-4 bg-slate-50 border-0 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="用户名">
-                        <input type="password" id="password" class="w-full px-5 py-4 bg-slate-50 border-0 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="登录密码">
-                        <div id="loginGroup" class="pt-2">
-                            <button id="btnLogin" onclick="login()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg">登 录</button>
-                            <div class="flex justify-between mt-4">
-                                <button onclick="toggleAuth(true)" class="text-slate-400 font-bold text-xs">注册账号</button>
-                                <button onclick="showForgotPassword()" class="text-indigo-500 font-bold text-xs">忘记密码?</button>
-                            </div>
+                        <input type="text" id="username" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold" placeholder="用户名">
+                        <input type="password" id="password" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold" placeholder="登录密码">
+                        <div id="loginGroup" class="pt-2"><button id="btnLogin" onclick="login()" class="w-full bg-indigo-600 text-white py-5 rounded-[22px] font-black text-lg shadow-xl shadow-indigo-100 active:scale-95 transition-transform">登 录</button>
+                            <div class="flex justify-between mt-6 px-2"><button onclick="toggleAuth(true)" class="text-slate-400 font-bold text-xs hover:text-indigo-600">注册新账号</button><button onclick="showForgotPassword()" class="text-indigo-500 font-bold text-xs underline underline-offset-4">忘记密码?</button></div>
                         </div>
                         <div id="regGroup" class="hidden pt-2 space-y-4">
-                            <input type="text" id="regPhone" class="w-full px-5 py-4 bg-slate-50 border-0 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="手机号 (找回密码用)">
-                            <select id="regQuestion" class="w-full px-5 py-4 bg-slate-50 border-0 rounded-2xl outline-none">
-                                <option value="" disabled selected>选择密保问题</option>
-                                <option value="您的出生地是哪里？">您的出生地是哪里？</option>
-                                <option value="您母亲的姓名是？">您母亲的姓名是？</option>
-                                <option value="您第一只宠物的名字？">您第一只宠物的名字？</option>
-                                <option value="您最喜欢的电影是？">您最喜欢的电影是？</option>
-                            </select>
-                            <input type="text" id="regAnswer" class="w-full px-5 py-4 bg-slate-50 border-0 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="密保答案">
-                            <button id="btnReg" onclick="register()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-lg">完成注册</button>
-                            <button onclick="toggleAuth(false)" class="w-full text-slate-400 font-bold text-xs mt-4">返回登录</button>
+                            <input type="text" id="regPhone" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] focus:ring-2 focus:ring-indigo-500 outline-none font-bold" placeholder="手机号 (仅用于找回密码)">
+                            <select id="regQuestion" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] font-bold text-slate-500 appearance-none"><option value="" disabled selected>设置密保问题</option><option value="出生地">您的出生地是哪里？</option><option value="母亲姓名">您母亲的姓名是？</option><option value="第一只宠物">第一只宠物的名字？</option></select>
+                            <input type="text" id="regAnswer" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] font-bold" placeholder="密保答案">
+                            <button id="btnReg" onclick="register()" class="w-full bg-emerald-600 text-white py-5 rounded-[22px] font-black text-lg shadow-xl active:scale-95 transition-transform">完成注册</button>
+                            <button onclick="toggleAuth(false)" class="w-full text-slate-400 font-bold text-xs mt-4">返回登录界面</button>
                         </div>
                         <div id="forgotGroup" class="hidden pt-2 space-y-4">
-                            <div id="forgotStep1">
-                                <p class="text-xs text-slate-400 mb-2">输入用户名以获取密保问题</p>
-                                <button onclick="verifyUserForForgot()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black">获取问题</button>
+                            <div id="forgotStep1" class="space-y-4">
+                                <p class="text-xs text-center text-slate-400 font-bold px-4 leading-relaxed">系统将根据用户名调取密保问题</p>
+                                <button onclick="verifyUserForForgot()" class="w-full bg-indigo-600 text-white py-5 rounded-[22px] font-black active:scale-95 transition-transform">获取我的密保问题</button>
                             </div>
                             <div id="forgotStep2" class="hidden space-y-4">
-                                <div class="bg-indigo-50 p-4 rounded-2xl text-indigo-700 text-xs font-bold" id="displayQuestion"></div>
-                                <input type="text" id="forgotPhone" class="w-full px-5 py-4 bg-slate-50 border-0 rounded-2xl outline-none" placeholder="注册手机号">
-                                <input type="text" id="forgotAnswer" class="w-full px-5 py-4 bg-slate-50 border-0 rounded-2xl outline-none" placeholder="密保答案">
-                                <input type="password" id="forgotNewPass" class="w-full px-5 py-4 bg-slate-50 border-0 rounded-2xl outline-none" placeholder="设置新密码">
-                                <button onclick="resetPasswordNow()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black">重置并登录</button>
+                                <div class="bg-indigo-50 p-5 rounded-[22px] text-indigo-700 text-xs font-black border border-indigo-100/50" id="displayQuestion"></div>
+                                <input type="text" id="forgotPhone" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px]" placeholder="预留手机号">
+                                <input type="text" id="forgotAnswer" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px]" placeholder="密保答案">
+                                <input type="password" id="forgotNewPass" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px]" placeholder="设置新密码 (不少于6位)">
+                                <button onclick="resetPasswordNow()" class="w-full bg-indigo-600 text-white py-5 rounded-[22px] font-black shadow-xl active:scale-95 transition-transform">重置并登录</button>
                             </div>
-                            <button onclick="toggleAuth(false)" class="w-full text-slate-400 font-bold text-xs mt-4">返回登录</button>
+                            <button onclick="toggleAuth(false)" class="w-full text-slate-400 font-bold text-xs mt-4">放弃重置</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 系统主体 -->
-            <div id="app-content" class="hidden space-y-8 pb-10">
-                <div id="page-dashboard" class="page-content hidden space-y-8">
-                    <div class="flex items-center justify-between"><h2 class="text-3xl font-black text-slate-900">业务大盘</h2><span id="perfTag" class="px-3 py-1 bg-white border border-slate-200 text-slate-500 rounded-full text-[10px] font-black uppercase"></span></div>
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" id="statCards"></div>
+            <!-- 系统主容器 -->
+            <div id="app-content" class="hidden space-y-8 pb-20">
+                <!-- 仪表盘 -->
+                <div id="page-dashboard" class="page-content hidden space-y-8 page-enter">
+                    <div class="flex items-center justify-between"><h2 class="text-4xl font-black text-slate-900 tracking-tighter">业务大盘</h2><span id="perfTag" class="px-4 py-1.5 bg-white border border-slate-100 text-slate-400 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm"></span></div>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-5" id="statCards"></div>
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                        <div class="glass-card p-6 md:p-8"><h3 class="text-lg font-black mb-6 text-slate-700">产品数量分布</h3><div class="h-[300px] md:h-[400px]"><canvas id="productQtyChart"></canvas></div></div>
-                        <div class="glass-card p-6 md:p-8"><h3 class="text-lg font-black mb-6 text-slate-700">库存价值分布</h3><div class="h-[300px] md:h-[400px]"><canvas id="productValueChart"></canvas></div></div>
+                        <div class="glass-card p-8"><h3 class="text-xl font-black mb-8 text-slate-700">产品数量占比</h3><div class="h-[300px] md:h-[400px]"><canvas id="productQtyChart"></canvas></div></div>
+                        <div class="glass-card p-8"><h3 class="text-xl font-black mb-8 text-slate-700">资产价值分布</h3><div class="h-[300px] md:h-[400px]"><canvas id="productValueChart"></canvas></div></div>
                     </div>
-                    <div class="glass-card p-6 md:p-8"><h3 class="text-lg font-black mb-6 flex items-center text-slate-700"><i data-lucide="beaker" class="mr-2 text-amber-500"></i>样品库存实时看板 (包)</h3><div class="h-[300px] md:h-[450px]"><canvas id="sampleQtyChart"></canvas></div></div>
-                    <div class="admin-only hidden glass-card p-6 md:p-8"><h3 class="text-lg font-black mb-6 text-slate-700">业绩排行榜</h3><div id="perfList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div></div>
+                    <div class="glass-card p-8"><h3 class="text-xl font-black mb-8 flex items-center text-slate-700"><i data-lucide="beaker" class="mr-3 text-amber-500"></i>样品库实时存量 (包)</h3><div class="h-[350px] md:h-[500px]"><canvas id="sampleQtyChart"></canvas></div></div>
+                    <div class="admin-only hidden glass-card p-8"><h3 class="text-xl font-black mb-8 text-slate-700 flex items-center"><i data-lucide="award" class="mr-3 text-orange-400"></i>员工贡献榜</h3><div id="perfList" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div></div>
                 </div>
 
-                <div id="page-inventory" class="page-content hidden space-y-6">
-                    <div class="flex justify-between items-center"><h2 class="text-3xl font-black text-slate-900">库存台账</h2><button onclick="openAddProdModal()" class="bg-indigo-600 text-white p-4 rounded-2xl shadow-xl hover:scale-105 transition-all"><i data-lucide="plus"></i></button></div>
-                    <div class="flex flex-col md:flex-row gap-4">
-                        <div class="flex-1 flex bg-white p-2 rounded-2xl border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-500 transition-all"><i data-lucide="search" class="m-3 text-slate-400"></i><input type="text" id="invSearch" oninput="renderInventory()" placeholder="搜索名称、货号..." class="flex-1 bg-transparent outline-none font-medium"></div>
-                        <div class="flex items-center space-x-2 bg-white px-4 rounded-2xl border border-slate-200"><span class="text-[10px] font-black text-slate-400 uppercase">排序:</span><select id="invSortField" onchange="renderInventory()" class="bg-transparent py-3 outline-none font-bold text-sm"><option value="id">入库时间</option><option value="name">产品名称</option><option value="customerName">客户名称</option><option value="balance">库存数量</option><option value="value">总价值</option></select></div>
+                <!-- 库存台账 -->
+                <div id="page-inventory" class="page-content hidden space-y-6 page-enter">
+                    <div class="flex justify-between items-center"><h2 class="text-4xl font-black text-slate-900 tracking-tighter">库存台账</h2><button onclick="openAddProdModal()" class="bg-indigo-600 text-white w-14 h-14 rounded-2xl shadow-2xl shadow-indigo-200 flex items-center justify-center active:scale-90 transition-transform"><i data-lucide="plus" class="w-8 h-8"></i></button></div>
+                    <div class="flex flex-col gap-4">
+                        <div class="flex bg-white px-4 py-1 rounded-[22px] border border-slate-100 shadow-sm focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all"><i data-lucide="search" class="m-4 text-slate-300"></i><input type="text" id="invSearch" oninput="renderInventory()" placeholder="搜产品、搜货号..." class="flex-1 bg-transparent outline-none font-bold text-lg"></div>
+                        <div class="flex items-center space-x-3 bg-white px-6 py-4 rounded-[22px] shadow-sm border border-slate-100 self-end md:self-start"><span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sort:</span><select id="invSortField" onchange="renderInventory()" class="bg-transparent outline-none font-black text-sm text-indigo-600"><option value="id">按录入顺序</option><option value="name">按产品名</option><option value="customerName">按客户名</option><option value="balance">按库存高低</option><option value="value">按资产价值</option></select></div>
                     </div>
-                    <div class="hidden md:block glass-card overflow-hidden"><table class="w-full text-left"><thead class="bg-slate-50 border-b"><tr><th class="p-6 text-xs font-bold text-slate-400">外观</th><th class="p-6 text-xs font-bold text-slate-400 text-center">产品信息 (名称/货号/包装)</th><th class="p-6 text-xs font-bold text-slate-400 text-center">品类/客户/工厂</th><th class="p-6 text-xs font-bold text-slate-400">价格/库存</th><th class="p-6 text-xs font-bold text-slate-400 text-center">责任人</th><th class="p-6 text-right text-xs font-bold text-slate-400">总价值</th></tr></thead><tbody id="invTable" class="divide-y divide-slate-50"></tbody></table></div>
-                    <div id="invMobile" class="md:hidden space-y-4"></div>
+                    <div class="hidden md:block glass-card overflow-hidden"><table class="w-full text-left border-collapse"><thead class="bg-slate-50/50 border-b border-slate-100"><tr><th class="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">预览</th><th class="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">核心参数 (名称/货号)</th><th class="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">业务维度</th><th class="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">计价/库存</th><th class="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">经办人</th><th class="p-8 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">资产总额</th></tr></thead><tbody id="invTable" class="divide-y divide-slate-50"></tbody></table></div>
+                    <div id="invMobile" class="md:hidden space-y-5"></div>
                 </div>
 
-                <div id="page-transactions" class="page-content hidden space-y-6">
-                    <div class="flex justify-between items-center"><h2 class="text-3xl font-black text-slate-900">收发明细</h2><button onclick="openModal('transModal')" class="bg-indigo-600 text-white px-6 py-4 rounded-2xl shadow-xl font-black flex items-center hover:bg-indigo-700 transition-all"><i data-lucide="plus-circle" class="w-5 h-5 mr-2"></i>记一笔</button></div>
-                    <div class="flex items-center space-x-2 bg-white px-4 rounded-2xl border border-slate-200 self-start"><span class="text-[10px] font-black text-slate-400 uppercase">排序:</span><select id="transSortField" onchange="renderTrans()" class="bg-transparent py-3 outline-none font-bold text-sm"><option value="date">最近日期</option><option value="quantity">变动数量</option></select></div>
-                    <div id="transList" class="space-y-4"></div>
+                <!-- 收发流水 -->
+                <div id="page-transactions" class="page-content hidden space-y-6 page-enter">
+                    <div class="flex justify-between items-center"><h2 class="text-4xl font-black text-slate-900 tracking-tighter">收发明细</h2><button onclick="openModal('transModal')" class="bg-indigo-600 text-white px-8 py-4 rounded-[22px] shadow-2xl shadow-indigo-200 font-black flex items-center active:scale-95 transition-transform"><i data-lucide="plus-circle" class="w-5 h-5 mr-3"></i>立即记账</button></div>
+                    <div class="flex items-center space-x-3 bg-white px-6 py-4 rounded-[22px] shadow-sm border border-slate-100 self-start"><span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Order:</span><select id="transSortField" onchange="renderTrans()" class="bg-transparent outline-none font-black text-sm text-indigo-600"><option value="date">按日期倒序</option><option value="quantity">按数量大小</option></select></div>
+                    <div id="transList" class="space-y-6"></div>
                 </div>
 
-                <div id="page-factories" class="page-content hidden space-y-6"><div class="flex justify-between items-center"><h2 class="text-3xl font-black text-slate-900">工厂列表</h2><button onclick="openModal('factoryModal')" class="admin-only hidden bg-indigo-600 text-white p-4 rounded-2xl shadow-xl"><i data-lucide="plus"></i></button></div><div id="factoryListContent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div></div>
-                <div id="page-customers" class="page-content hidden space-y-6"><div class="flex justify-between items-center"><h2 class="text-3xl font-black text-slate-900">客户列表</h2><button onclick="openModal('customerModal')" class="admin-only hidden bg-indigo-600 text-white p-4 rounded-2xl shadow-xl"><i data-lucide="plus"></i></button></div><div id="customerListContent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div></div>
+                <!-- 档案辅助 -->
+                <div id="page-factories" class="page-content hidden space-y-6 page-enter"><div class="flex justify-between items-center"><h2 class="text-4xl font-black text-slate-900 tracking-tighter">工厂库</h2><button onclick="openModal('factoryModal')" class="admin-only hidden bg-indigo-600 text-white w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center active:scale-90 transition-transform"><i data-lucide="plus"></i></button></div><div id="factoryListContent" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div></div>
+                <div id="page-customers" class="page-content hidden space-y-6 page-enter"><div class="flex justify-between items-center"><h2 class="text-4xl font-black text-slate-900 tracking-tighter">客户库</h2><button onclick="openModal('customerModal')" class="admin-only hidden bg-indigo-600 text-white w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center active:scale-90 transition-transform"><i data-lucide="plus"></i></button></div><div id="customerListContent" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div></div>
 
-                <div id="page-settings" class="page-content hidden space-y-6">
-                    <h2 class="text-3xl font-black text-slate-900">设置中心</h2>
+                <div id="page-settings" class="page-content hidden space-y-8 page-enter">
+                    <h2 class="text-4xl font-black text-slate-900 tracking-tighter">设置中心</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="glass-card p-8 space-y-6"><h3 class="font-black">基本信息</h3><input type="text" id="settingNewUsername" class="w-full bg-slate-50 p-4 rounded-2xl font-bold border-0 outline-none"><button onclick="updateProfile(true)" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black">更新用户名</button></div>
-                        <div class="glass-card p-8 space-y-6"><h3 class="font-black">安全设置</h3><input type="password" id="oldPass" placeholder="当前密码" class="w-full bg-slate-50 p-4 rounded-2xl border-0"><input type="password" id="newPass" placeholder="新密码" class="w-full bg-slate-50 p-4 rounded-2xl border-0"><button onclick="updateProfile(false)" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black">修改密码</button></div>
-                        <div class="admin-only hidden glass-card p-8 space-y-6 lg:col-span-2">
-                            <h3 class="font-black text-slate-700 flex items-center"><i data-lucide="users" class="mr-2 w-5 h-5 text-indigo-500"></i>全员账号管理</h3>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left">
-                                    <thead>
-                                        <tr class="border-b border-slate-100"><th class="pb-4 text-[10px] font-black text-slate-400 uppercase">用户名</th><th class="pb-4 text-[10px] font-black text-slate-400 uppercase">手机号</th><th class="pb-4 text-right text-[10px] font-black text-slate-400 uppercase">操作</th></tr>
-                                    </thead>
-                                    <tbody id="userListTable" class="divide-y divide-slate-50"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="admin-only hidden glass-card p-8 space-y-6 lg:col-span-2"><h3 class="font-black text-slate-700">品类管理</h3><div class="flex space-x-2 mb-4"><input type="text" id="newCatName" class="flex-1 bg-slate-50 p-4 rounded-2xl"><button onclick="addCategory()" class="bg-amber-500 text-white px-6 rounded-2xl font-black">添加</button></div><div id="categoryList" class="flex flex-wrap gap-2"></div></div>
+                        <div class="glass-card p-10 space-y-8"><h3 class="text-xl font-black border-b border-slate-100 pb-4">账号信息</h3><div class="space-y-4"><label class="text-[10px] font-black text-slate-400 uppercase">当前显示的姓名</label><input type="text" id="settingNewUsername" class="w-full bg-slate-50 p-5 rounded-[22px] font-black border-0 outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"><button onclick="updateProfile(true)" class="w-full bg-slate-900 text-white py-5 rounded-[22px] font-black shadow-xl active:scale-95 transition-transform">同步更新</button></div></div>
+                        <div class="glass-card p-10 space-y-8"><h3 class="text-xl font-black border-b border-slate-100 pb-4">修改密码</h3><div class="space-y-4"><input type="password" id="oldPass" placeholder="旧密码" class="w-full bg-slate-50 p-5 rounded-[22px] border-0"><input type="password" id="newPass" placeholder="设置新密码 (6位以上)" class="w-full bg-slate-50 p-5 rounded-[22px] border-0"><button onclick="updateProfile(false)" class="w-full bg-indigo-600 text-white py-5 rounded-[22px] font-black shadow-xl active:scale-95 transition-transform">立即确认</button></div></div>
+                        <div class="admin-only hidden glass-card p-10 space-y-8 lg:col-span-2"><h3 class="text-xl font-black border-b border-slate-100 pb-4">全员账号管理</h3><div class="overflow-x-auto"><table class="w-full text-left"><tbody id="userListTable" class="divide-y divide-slate-50"></tbody></table></div></div>
+                        <div class="admin-only hidden glass-card p-10 space-y-8 lg:col-span-2"><h3 class="text-xl font-black border-b border-slate-100 pb-4">品类自定义</h3><div class="flex space-x-3"><input type="text" id="newCatName" class="flex-1 bg-slate-50 p-5 rounded-[22px] font-bold border-0 outline-none" placeholder="输入新品类名称..."><button onclick="addCategory()" class="bg-amber-500 text-white px-10 rounded-[22px] font-black active:scale-95 transition-all">添加</button></div><div id="categoryList" class="flex flex-wrap gap-3"></div></div>
                     </div>
                 </div>
             </div>
@@ -155,66 +160,60 @@
 
     <datalist id="customerDataList"></datalist>
 
-    <div id="prodModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-        <div class="bg-white w-full max-w-lg rounded-[40px] p-10 shadow-2xl overflow-hidden">
-            <h3 id="prodModalTitle" class="text-2xl font-black mb-6">档案管理</h3>
-            <div class="space-y-4 modal-scroll">
+    <!-- 弹窗集 (全系统加固) -->
+    <div id="prodModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-0 md:p-6 bg-slate-900/70 backdrop-blur-md">
+        <div class="bg-white w-full max-w-xl rounded-none md:rounded-[48px] p-8 md:p-12 shadow-2xl overflow-hidden flex flex-col h-full md:h-auto modal-drawer">
+            <h3 id="prodModalTitle" class="text-3xl font-black mb-8 tracking-tighter">产品档案编辑</h3>
+            <div class="space-y-5 modal-scroll flex-1">
                 <input type="hidden" id="editProdId">
-                <div class="grid grid-cols-2 gap-4"><div><select id="pCat" class="w-full bg-slate-50 p-4 rounded-2xl font-bold border-0 outline-none"></select></div><div><select id="pFact" class="w-full bg-slate-50 p-4 rounded-2xl font-bold border-0 outline-none"></select></div></div>
-                <input type="text" id="pCust" list="customerDataList" placeholder="客户名称" class="w-full bg-slate-50 p-4 rounded-2xl font-bold border-0 outline-none">
-                <div class="grid grid-cols-2 gap-4"><input type="text" id="pCustAddr" placeholder="地址(选填)" class="p-4 bg-slate-50 rounded-2xl border-0 outline-none"><input type="text" id="pCustPhone" placeholder="电话(选填)" class="p-4 bg-slate-50 rounded-2xl border-0 outline-none"></div>
-                <input type="text" id="pName" placeholder="产品名" class="w-full bg-slate-50 p-4 rounded-2xl border-0 outline-none">
-                <div class="grid grid-cols-2 gap-4"><input type="text" id="pSku" placeholder="货号" class="p-4 bg-slate-50 rounded-2xl border-0 outline-none"><input type="text" id="pPack" placeholder="规格(片/包)" class="p-4 bg-slate-50 rounded-2xl border-0 outline-none"></div>
-                <input type="number" id="pPrice" placeholder="单价(元)" class="w-full bg-slate-50 p-4 rounded-2xl border-0 outline-none">
-                <div class="grid grid-cols-2 gap-4"><input type="text" id="pSpec" placeholder="规格" class="p-4 bg-slate-50 rounded-2xl border-0 outline-none"><input type="text" id="pMat" placeholder="材质" class="p-4 bg-slate-50 rounded-2xl border-0 outline-none"></div>
-                <textarea id="pNotes" placeholder="档案备注..." class="w-full bg-slate-50 p-4 rounded-2xl h-24 border-0 font-medium outline-none"></textarea>
-                <div class="p-4 bg-indigo-50 rounded-2xl border-2 border-dashed border-indigo-200">
-                    <label class="block text-[10px] font-black text-indigo-400 mb-2">上传档案图片</label>
-                    <input type="file" id="pImage" accept="image/*" class="text-xs">
-                </div>
-                <button onclick="doSaveProduct()" id="btnSaveProd" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black text-lg">确认存档</button>
-                <button onclick="closeModal('prodModal')" class="w-full text-slate-400 font-bold text-sm">取消</button>
+                <div class="grid grid-cols-2 gap-4"><div><select id="pCat" class="w-full bg-slate-100 p-5 rounded-[22px] font-black border-0 outline-none"></select></div><div><select id="pFact" class="w-full bg-slate-100 p-5 rounded-[22px] font-black border-0 outline-none"></select></div></div>
+                <input type="text" id="pCust" list="customerDataList" placeholder="所属客户名称" class="w-full bg-slate-100 p-5 rounded-[22px] font-black border-0 outline-none">
+                <div class="grid grid-cols-2 gap-4"><input type="text" id="pCustAddr" placeholder="客户地址" class="p-5 bg-slate-50 rounded-[22px] border-0 text-sm"><input type="text" id="pCustPhone" placeholder="联系电话" class="p-5 bg-slate-50 rounded-[22px] border-0 text-sm"></div>
+                <input type="text" id="pName" placeholder="产品展示全名" class="w-full bg-slate-100 p-5 rounded-[22px] font-black border-0">
+                <div class="grid grid-cols-2 gap-4"><input type="text" id="pSku" placeholder="货号 SKU" class="p-5 bg-slate-50 rounded-[22px] border-0 font-mono"><input type="text" id="pPack" placeholder="规格(片/包)" class="p-5 bg-slate-50 rounded-[22px] border-0"></div>
+                <input type="number" id="pPrice" placeholder="结算单价 (元)" class="w-full bg-slate-100 p-5 rounded-[22px] font-black border-0">
+                <div class="grid grid-cols-2 gap-4"><input type="text" id="pSpec" placeholder="尺寸" class="p-5 bg-slate-50 rounded-[22px] border-0"><input type="text" id="pMat" placeholder="材质" class="p-5 bg-slate-50 rounded-[22px] border-0"></div>
+                <textarea id="pNotes" placeholder="永久档案备注..." class="w-full bg-slate-50 p-5 rounded-[22px] h-24 border-0 font-bold outline-none"></textarea>
+                <div class="p-6 bg-indigo-50 rounded-[32px] border-2 border-dashed border-indigo-200 text-center"><label class="block text-[10px] font-black text-indigo-400 mb-2 uppercase tracking-widest">点击或拖拽上传产品图</label><input type="file" id="pImage" accept="image/*" class="text-xs text-slate-400 mx-auto"></div>
+                <button onclick="doSaveProduct()" id="btnSaveProd" class="w-full bg-indigo-600 text-white py-6 rounded-[24px] font-black text-xl shadow-2xl active:scale-95 transition-all">确认并保存存档</button>
+                <button onclick="closeModal('prodModal')" class="w-full text-slate-400 font-bold text-sm py-4">放弃并关闭</button>
             </div>
         </div>
     </div>
 
-    <div id="transModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-        <div class="bg-white w-full max-w-lg rounded-[40px] p-10 shadow-2xl">
-            <h3 class="text-2xl font-black mb-6">业务记账</h3>
-            <div class="space-y-4 modal-scroll">
-                <div class="p-4 bg-indigo-600 text-white rounded-2xl flex items-center justify-between"><label class="text-sm font-bold">新产品直接入库？</label><input type="checkbox" id="isNew" onchange="toggleQuickFields()"></div>
-                <div id="oldPBox"><select id="tProd" class="w-full bg-slate-50 p-4 rounded-2xl font-bold border-0 outline-none"></select></div>
-                <div id="newPBox" class="hidden space-y-4 p-5 bg-slate-50 rounded-3xl border border-indigo-100 shadow-inner">
-                    <div class="grid grid-cols-2 gap-3"><select id="qCat" class="p-4 rounded-xl font-bold border-0 outline-none bg-white"></select><select id="qFact" class="p-4 rounded-xl font-bold border-0 outline-none bg-white"></select></div>
-                    <input type="text" id="qCust" list="customerDataList" placeholder="客户名称" class="w-full p-4 rounded-xl border-0 outline-none">
-                    <div class="grid grid-cols-2 gap-2"><input type="text" id="qCustAddr" placeholder="地址" class="p-4 rounded-xl border-0 outline-none bg-white"><input type="text" id="qCustPhone" placeholder="电话" class="p-4 rounded-xl border-0 outline-none bg-white"></div>
-                    <input type="text" id="qName" placeholder="产品名" class="w-full p-4 rounded-xl border-0 outline-none">
-                    <div class="grid grid-cols-2 gap-2"><input type="number" id="qPrice" placeholder="单价" class="p-4 rounded-xl border-0 outline-none"><input type="text" id="qSku" placeholder="货号" class="p-4 rounded-xl border-0 outline-none"></div>
-                    <input type="text" id="qPack" placeholder="包装规格" class="w-full p-4 rounded-xl border-0 outline-none">
-                    <textarea id="qNotes" placeholder="设置档案备注..." class="w-full p-4 rounded-xl h-16 border-0 outline-none"></textarea>
-                    <div class="p-3 bg-white rounded-xl border-2 border-dashed border-indigo-100"><label class="block text-[9px] font-black text-indigo-400 mb-1 uppercase">产品图</label><input type="file" id="qImage" accept="image/*" class="text-[10px]"></div>
+    <div id="transModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-0 md:p-6 bg-slate-900/70 backdrop-blur-md">
+        <div class="bg-white w-full max-w-xl rounded-none md:rounded-[48px] p-8 md:p-12 shadow-2xl overflow-hidden flex flex-col h-full md:h-auto modal-drawer">
+            <h3 class="text-3xl font-black mb-8 tracking-tighter">业务流水记账</h3>
+            <div class="space-y-5 modal-scroll flex-1">
+                <div class="p-5 bg-indigo-600 text-white rounded-[24px] flex items-center justify-between shadow-xl"><label class="font-black text-sm">这是一个新产品？</label><input type="checkbox" id="isNew" onchange="toggleQuickFields()" class="w-6 h-6 rounded-lg"></div>
+                <div id="oldPBox"><select id="tProd" class="w-full bg-slate-100 p-6 rounded-[24px] font-black border-0 outline-none"></select></div>
+                <div id="newPBox" class="hidden space-y-4 p-6 bg-slate-50 rounded-[32px] border border-indigo-100 shadow-inner">
+                    <div class="grid grid-cols-2 gap-3"><select id="qCat" class="p-5 rounded-2xl bg-white border-0 font-black"></select><select id="qFact" class="p-5 rounded-2xl bg-white border-0 font-black"></select></div>
+                    <input type="text" id="qCust" list="customerDataList" placeholder="新客户名" class="w-full p-5 rounded-2xl bg-white font-black border-0">
+                    <div class="grid grid-cols-2 gap-2"><input type="text" id="qCustAddr" placeholder="客户地址" class="p-5 rounded-2xl bg-white border-0 text-sm"><input type="text" id="qCustPhone" placeholder="联系电话" class="p-5 rounded-2xl bg-white border-0 text-sm"></div>
+                    <input type="text" id="qName" placeholder="产品名称" class="w-full p-5 rounded-2xl bg-white font-black border-0">
+                    <div class="grid grid-cols-2 gap-2"><input type="number" id="qPrice" placeholder="单价" class="p-5 rounded-2xl bg-white border-0"><input type="text" id="qSku" placeholder="货号" class="p-5 rounded-2xl bg-white border-0"></div>
+                    <textarea id="qNotes" placeholder="设置初始档案备注..." class="w-full p-5 rounded-2xl h-20 bg-white border-0 text-sm"></textarea>
+                    <div class="p-4 bg-white rounded-2xl border-2 border-dashed border-indigo-100 text-center"><label class="block text-[9px] font-black text-indigo-400 mb-2 uppercase">上传产品图</label><input type="file" id="qImage" accept="image/*" class="text-[10px] mx-auto"></div>
                 </div>
-                <div class="grid grid-cols-2 gap-4"><input type="text" id="tOrder" placeholder="订单号" class="p-4 rounded-2xl bg-slate-50 border-0 outline-none"><input type="text" id="tLog" placeholder="物流单号" class="p-4 rounded-2xl bg-slate-50 border-0 outline-none"></div>
-                <div class="flex space-x-4"><select id="tType" class="flex-1 p-4 rounded-2xl font-black bg-slate-50 border-0 outline-none"><option value="in">入库 (+)</option><option value="out">出库 (-)</option></select><input type="number" id="tQty" placeholder="数量 (包)" class="flex-1 p-4 rounded-2xl font-black bg-slate-50 border-0 outline-none"></div>
-                <div class="p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200"><label class="block text-[10px] font-black text-slate-400 mb-2 uppercase">上传现场照片</label><input type="file" id="tImage" accept="image/*" class="text-xs"></div>
-                <textarea id="tNotes" placeholder="单次流水备注..." class="w-full bg-slate-50 p-4 rounded-2xl h-20 border-0 font-medium outline-none"></textarea>
-                <button onclick="doSaveTrans()" id="btnSaveTrans" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl">确认并提交</button>
-                <button onclick="closeModal('transModal')" class="w-full text-slate-400 font-bold text-sm">取消</button>
+                <div class="grid grid-cols-2 gap-4"><input type="text" id="tOrder" placeholder="订单号" class="p-5 rounded-[22px] bg-slate-100 border-0 outline-none font-bold"><input type="text" id="tLog" placeholder="物流单号" class="p-5 rounded-[22px] bg-slate-100 border-0 outline-none font-bold"></div>
+                <div class="flex space-x-4"><select id="tType" class="flex-1 p-6 rounded-[24px] font-black bg-slate-900 text-white border-0 outline-none"><option value="in">产品入库 (+)</option><option value="out">发货出库 (-)</option></select><input type="number" id="tQty" placeholder="数量(包)" class="flex-1 p-6 rounded-[24px] font-black bg-slate-100 border-0 outline-none"></div>
+                <div class="p-6 bg-slate-100 rounded-[28px] border-2 border-dashed border-slate-200 text-center"><label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">上传本次现场实拍照</label><input type="file" id="tImage" accept="image/*" class="text-xs mx-auto"></div>
+                <textarea id="tNotes" placeholder="流水特殊备注 (同步至台账)..." class="w-full bg-slate-100 p-6 rounded-[24px] h-24 border-0 font-bold outline-none"></textarea>
+                <button onclick="doSaveTrans()" id="btnSaveTrans" class="w-full bg-indigo-600 text-white py-6 rounded-[28px] font-black text-xl shadow-2xl active:scale-95 transition-all">完成提交并存入数据库</button>
+                <button onclick="closeModal('transModal')" class="w-full text-slate-400 font-bold text-sm py-4">放弃操作</button>
             </div>
         </div>
     </div>
 
-    <!-- 详情大窗 -->
-    <div id="detailModal" class="hidden fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-        <div class="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50"><h3 id="detailTitle" class="text-2xl font-black text-slate-900 tracking-tight">记录详细追溯</h3><button onclick="closeModal('detailModal')" class="p-2 bg-white rounded-full shadow-sm hover:bg-slate-100 transition-colors"><i data-lucide="x"></i></button></div>
-            <div id="detailContent" class="p-8 overflow-y-auto space-y-6 bg-white"></div>
-            <div class="p-6 bg-slate-50 text-center border-t border-slate-100"><button onclick="closeModal('detailModal')" class="px-10 py-3 bg-slate-900 text-white rounded-2xl font-black text-sm shadow-xl hover:bg-black transition-all">确 认</button></div>
+    <!-- 详情大窗 (沉浸式) -->
+    <div id="detailModal" class="hidden fixed inset-0 z-[250] flex items-end md:items-center justify-center p-0 md:p-6 bg-slate-900/80 backdrop-blur-xl">
+        <div class="bg-white w-full max-w-3xl rounded-t-[48px] md:rounded-[56px] shadow-2xl overflow-hidden flex flex-col h-[90vh] md:h-auto modal-drawer">
+            <div class="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30 sticky top-0 z-10"><h3 id="detailTitle" class="text-2xl font-black text-slate-900 tracking-tighter"></h3><button onclick="closeModal('detailModal')" class="p-3 bg-white rounded-2xl shadow-sm active:scale-90 transition-transform"><i data-lucide="x"></i></button></div>
+            <div id="detailContent" class="p-8 md:p-12 overflow-y-auto space-y-10 flex-1"></div>
+            <div class="p-8 bg-slate-50/50 text-center"><button onclick="closeModal('detailModal')" class="w-full max-w-xs py-5 bg-slate-900 text-white rounded-[24px] font-black text-lg shadow-2xl active:scale-95 transition-all">我已阅读并确认</button></div>
         </div>
     </div>
-
-    <div id="factoryModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"><div class="bg-white w-full max-w-lg rounded-[32px] p-8 shadow-2xl"><h3 class="text-2xl font-black mb-6">新增工厂</h3><div class="space-y-4"><input type="text" id="fName" placeholder="工厂名" class="w-full bg-slate-50 p-4 rounded-2xl"><input type="text" id="fAddr" placeholder="地址" class="w-full bg-slate-50 p-4 rounded-2xl"><button onclick="doSaveFactory()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black">确认添加</button></div></div></div>
-    <div id="customerModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"><div class="bg-white w-full max-w-lg rounded-[32px] p-8 shadow-2xl"><h3 class="text-2xl font-black mb-6">新增客户</h3><div class="space-y-4"><input type="text" id="cName" placeholder="客户名" class="w-full bg-slate-50 p-4 rounded-2xl"><input type="text" id="cContact" placeholder="联系信息" class="w-full bg-slate-50 p-4 rounded-2xl"><button onclick="doSaveCustomer()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black">确认添加</button></div></div></div>
 
     <script>
         const api = axios.create({ baseURL: '/api' });
@@ -224,6 +223,10 @@
         let qtyChart = null, valueChart = null, sampleChart = null;
 
         function previewImg(url) { const over = document.getElementById('imgPreviewOverlay'); const img = document.getElementById('imgPreviewContent'); img.src = url; over.classList.remove('hidden'); }
+        function openModal(id) { const el = document.getElementById(id); if(el) { el.classList.remove('hidden'); document.body.style.overflow = 'hidden'; } }
+        function closeModal(id) { const el = document.getElementById(id); if(el) { el.classList.add('hidden'); document.body.style.overflow = ''; } }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('sidebarOverlay').classList.toggle('hidden'); }
+        function toast(m, b) { const t = document.getElementById('toast'); t.innerText = m; t.className = `fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] px-8 py-5 rounded-[32px] shadow-2xl transition-all duration-500 font-black text-sm text-white ${b}`; t.classList.remove('hidden'); setTimeout(() => t.classList.add('hidden'), 3500); }
 
         function initApp() {
             try {
@@ -232,7 +235,7 @@
                     document.getElementById('page-login').classList.add('hidden');
                     document.getElementById('app-content').classList.remove('hidden');
                     document.getElementById('sidebar').classList.remove('-translate-x-full');
-                    document.getElementById('roleDisplay').innerText = currentUser.role === 'admin' ? '系统管理员' : '销售专员';
+                    document.getElementById('roleDisplay').innerText = currentUser.role === 'admin' ? 'SYSTEM ADMIN' : 'SALES SPECIALIST';
                     document.getElementById('settingNewUsername').value = currentUser.username;
                     if (currentUser.role === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
                     fetchCategories(); fetchFactories(); fetchCustomers(); showPage('dashboard');
@@ -247,7 +250,18 @@
         function renderCustomerUI() {
             const dl = document.getElementById('customerDataList'); if(dl) dl.innerHTML = allCustomers.map(c => `<option value="${c.name}">`).join('');
             const listEl = document.getElementById('customerListContent');
-            if (listEl) { listEl.innerHTML = allCustomers.map(c => `<div class="glass-card p-6 border-l-4 border-indigo-500 flex justify-between items-start"><div><h4 class="text-xl font-black">${c.name}</h4><p class="text-xs text-slate-500 mt-1">${c.address || ''} | ${c.phone || ''}</p></div><button onclick="doDeleteCustomer('${c.id}')" class="text-slate-300 hover:text-rose-500 transition-colors"><i data-lucide="trash-2"></i></button></div>`).join(''); lucide.createIcons(); }
+            if (listEl) {
+                listEl.innerHTML = allCustomers.map(c => `
+                    <div class="glass-card p-6 border-l-[6px] border-indigo-500 flex justify-between items-start animate-in fade-in slide-in-from-right-4">
+                        <div class="space-y-1">
+                            <h4 class="text-xl font-black text-slate-800 tracking-tighter">${c.name}</h4>
+                            <p class="text-xs text-slate-400 font-bold flex items-center"><i data-lucide="map-pin" class="w-3 h-3 mr-1"></i>${c.address || '未设置地址'}</p>
+                            <p class="text-xs text-slate-400 font-bold flex items-center"><i data-lucide="phone" class="w-3 h-3 mr-1"></i>${c.phone || '未设置电话'}</p>
+                        </div>
+                        <button onclick="doDeleteCustomer('${c.id}')" class="admin-only ${currentUser.role === 'admin' ? '' : 'hidden'} text-slate-300 hover:text-rose-500 active:scale-90 p-2"><i data-lucide="trash-2"></i></button>
+                    </div>`).join('');
+                lucide.createIcons();
+            }
         }
         async function getOrCreateCustomer(name, address = '', phone = '') {
             if (!name || !name.trim()) return null;
@@ -255,134 +269,67 @@
             if (existing) return existing;
             try { const res = await api.post('/customers', { name: name.trim(), address, phone }); const newCust = res.data; allCustomers.push(newCust); renderCustomerUI(); return newCust; } catch (e) { return null; }
         }
-        async function doSaveCustomer() { try { await api.post('/customers', { name: cName.value, contact: cContact.value }); toast('✅ 成功', 'bg-emerald-500'); closeModal('customerModal'); await fetchCustomers(); } catch (e) { toast('❌ 失败', 'bg-red-500'); } }
-        async function doDeleteCustomer(id) { if (confirm('确认删除?')) { await api.delete(`/customers/${id}`); await fetchCustomers(); } }
+        async function doSaveCustomer() { try { await api.post('/customers', { name: cName.value, contact: cContact.value }); toast('✅ 客户档案已建立', 'bg-emerald-500'); closeModal('customerModal'); await fetchCustomers(); } catch (e) { toast('❌ 操作失败', 'bg-red-500'); } }
+        async function doDeleteCustomer(id) { if (confirm('确认彻底移除该客户?')) { await api.delete(`/customers/${id}`); await fetchCustomers(); } }
 
         async function fetchFactories() { try { const res = await api.get('/factories'); allFactories = res.data; renderFactoryUI(); } catch (e) {} }
         function renderFactoryUI() {
             const opts = allFactories.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
-            const pF = document.getElementById('pFact'); if(pF) pF.innerHTML = '<option value="" disabled selected>选择工厂...</option>' + opts;
-            const qF = document.getElementById('qFact'); if(qF) qF.innerHTML = '<option value="" disabled selected>选择工厂...</option>' + opts;
+            const pF = document.getElementById('pFact'); if(pF) pF.innerHTML = '<option value="" disabled selected>选择生产工厂...</option>' + opts;
+            const qF = document.getElementById('qFact'); if(qF) qF.innerHTML = '<option value="" disabled selected>选择生产工厂...</option>' + opts;
             const listEl = document.getElementById('factoryListContent');
-            if (listEl) { listEl.innerHTML = allFactories.map(f => `<div class="glass-card p-6 border-t-4 shadow-sm" style="border-top-color: ${f.color}"><div class="flex justify-between"><div><h4 class="text-xl font-black">${f.name}</h4><p class="text-xs text-slate-400">${f.address || ''}</p></div><button onclick="doDeleteFactory('${f.id}')" class="text-slate-300 hover:text-rose-500 transition-colors"><i data-lucide="trash-2"></i></button></div></div>`).join(''); lucide.createIcons(); }
+            if (listEl) {
+                listEl.innerHTML = allFactories.map(f => `
+                    <div class="glass-card p-8 border-t-[8px] shadow-xl shadow-slate-100/50 animate-in zoom-in-95" style="border-top-color: ${f.color}">
+                        <div class="flex justify-between items-start">
+                            <div><h4 class="text-2xl font-black text-slate-900 tracking-tighter">${f.name}</h4><p class="text-xs text-slate-400 font-bold mt-2">${f.address || '暂无详细地址'}</p></div>
+                            <button onclick="doDeleteFactory('${f.id}')" class="text-slate-200 hover:text-rose-500 transition-colors p-2"><i data-lucide="trash-2" class="w-6 h-6"></i></button>
+                        </div>
+                    </div>`).join('');
+                lucide.createIcons();
+            }
         }
-        async function doSaveFactory() { try { await api.post('/factories', { name: fName.value, address: fAddr.value }); toast('✅ 成功', 'bg-emerald-500'); closeModal('factoryModal'); await fetchFactories(); } catch (e) { toast('❌ 失败', 'bg-red-500'); } }
-        async function doDeleteFactory(id) { if (confirm('确认删除?')) { await api.delete(`/factories/${id}`); await fetchFactories(); } }
+        async function doSaveFactory() { try { await api.post('/factories', { name: fName.value, address: fAddr.value }); toast('✅ 工厂信息已保存', 'bg-emerald-500'); closeModal('factoryModal'); await fetchFactories(); } catch (e) { toast('❌ 失败', 'bg-red-500'); } }
+        async function doDeleteFactory(id) { if (confirm('确认注销该工厂?')) { await api.delete(`/factories/${id}`); await fetchFactories(); } }
 
         function showPage(id) {
-            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.page-content').forEach(p => { p.classList.add('hidden'); p.classList.remove('page-enter'); });
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            const pg = document.getElementById(`page-${id}`); if(pg) pg.classList.remove('hidden');
+            const pg = document.getElementById(`page-${id}`); if(pg) { pg.classList.remove('hidden'); void pg.offsetWidth; pg.classList.add('page-enter'); }
             const nav = document.getElementById(`nav-${id}`); if(nav) nav.classList.add('active');
             if (id === 'dashboard') loadDash();
             if (id === 'inventory') renderInventory();
             if (id === 'transactions') renderTrans();
             if (id === 'factories') renderFactoryUI();
             if (id === 'customers') renderCustomerUI();
-            if (id === 'settings') {
-                renderCategoryUI();
-                if (currentUser.role === 'admin') fetchUsers();
-            }
+            if (id === 'settings') { renderCategoryUI(); if(currentUser.role==='admin') fetchUsers(); }
             if (window.innerWidth < 768 && !document.getElementById('sidebar').classList.contains('-translate-x-full')) toggleSidebar();
-        }
-
-        async function fetchUsers() {
-            try {
-                const res = await api.get('/admin/users');
-                const users = res.data;
-                const table = document.getElementById('userListTable');
-                if (table) {
-                    table.innerHTML = users.map(u => `
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="py-4 font-bold text-slate-700">${u.username} ${u.role === 'admin' ? '<span class="text-[8px] bg-indigo-100 text-indigo-600 px-1.5 rounded ml-1 uppercase">Admin</span>' : ''}</td>
-                            <td class="py-4 text-xs text-slate-400 font-mono">${u.phone || '-'}</td>
-                            <td class="py-4 text-right">
-                                <button onclick="adminResetPassword('${u.id}', '${u.username}')" class="text-xs font-black text-indigo-500 hover:text-indigo-700 mr-4">重置密码</button>
-                                ${u.id !== currentUser.id ? `<button onclick="adminDeleteUser('${u.id}')" class="text-xs font-black text-rose-400 hover:text-rose-600">注销</button>` : ''}
-                            </td>
-                        </tr>
-                    `).join('');
-                }
-            } catch (e) { 
-                const msg = e.response?.data?.message || '网络异常';
-                toast(`❌ ${msg}`, 'bg-red-600'); 
-                console.error('Fetch users error:', e);
-            }
-        }
-
-        async function adminResetPassword(id, name) {
-            const pass = prompt(`请输入为员工 [${name}] 设置的新密码:`);
-            if (!pass || pass.length < 6) return toast('⚠️ 密码至少需要6位', 'bg-amber-500');
-            try {
-                await api.post('/admin/reset-user-password', { userId: id, newPassword: pass });
-                toast(`✅ 已将 ${name} 的密码重置`, 'bg-emerald-500');
-            } catch (e) { toast('❌ 重置失败', 'bg-red-500'); }
-        }
-
-        async function adminDeleteUser(id) {
-            if (!confirm('确定注销该员工账号吗？该操作不可逆！')) return;
-            try { await api.delete(`/admin/users/${id}`); toast('✅ 账号已注销', 'bg-emerald-500'); fetchUsers(); } catch (e) { toast('❌ 操作失败', 'bg-red-500'); }
         }
 
         async function loadDash() {
             try {
                 const [statsRes, invRes] = await Promise.all([api.get('/dashboard-stats'), api.get('/inventory')]);
-                const { productMix, performance } = statsRes.data; products = invRes.data;
-                document.getElementById('statCards').innerHTML = [{ t: '累计出货', v: performance.totalOut, c: 'text-rose-500' }, { t: '累计入库', v: performance.totalIn, c: 'text-emerald-500' }, { t: '业务记录', v: performance.transCount, c: 'text-indigo-500' }, { t: '在管款式', v: performance.activeSkus, c: 'text-amber-500' }].map(c => `<div class="glass-card p-5 shadow-sm"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${c.t}</p><p class="text-2xl font-black mt-2 ${c.c}">${c.v}</p></div>`).join('');
+                const { productMix, performance, leaderboard } = statsRes.data; products = invRes.data;
+                document.getElementById('statCards').innerHTML = [
+                    { t: '本月累计出库', v: performance.totalOut, c: 'text-rose-600', i: 'truck' }, 
+                    { t: '本月累计入库', v: performance.totalIn, c: 'text-emerald-600', i: 'download' }, 
+                    { t: '总业务流转', v: performance.transCount, c: 'text-indigo-600', i: 'activity' }, 
+                    { t: '实时款式总数', v: performance.activeSkus, c: 'text-amber-600', i: 'layers' }
+                ].map(c => `<div class="glass-card p-6 flex items-start justify-between"><div class="space-y-2"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${c.t}</p><p class="text-3xl font-black ${c.c}">${c.v}</p></div><div class="${c.c.replace('text-', 'bg-')}/10 p-3 rounded-2xl"><i data-lucide="${c.i}" class="w-5 h-5 ${c.c}"></i></div></div>`).join('');
+                
                 const labels = productMix.map(p => p.name), qtyD = productMix.map(p => p.balance), valD = productMix.map(p => { const pr = products.find(prod => prod.name === p.name); return (p.balance * (pr?.unitPrice || 0)).toFixed(2); });
                 const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#0ea5e9'];
-                if (qtyChart) qtyChart.destroy(); qtyChart = new Chart(document.getElementById('productQtyChart'), { type: 'doughnut', data: { labels, datasets: [{ data: qtyD, backgroundColor: colors }] }, options: { maintainAspectRatio: false } });
-                if (valueChart) valueChart.destroy(); valueChart = new Chart(document.getElementById('productValueChart'), { type: 'doughnut', data: { labels, datasets: [{ data: valD, backgroundColor: colors }] }, options: { maintainAspectRatio: false } });
+                if (qtyChart) qtyChart.destroy(); qtyChart = new Chart(document.getElementById('productQtyChart'), { type: 'doughnut', data: { labels, datasets: [{ data: qtyD, backgroundColor: colors, borderWidth: 0, hoverOffset: 20 }] }, options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold' } } } } } });
+                if (valueChart) valueChart.destroy(); valueChart = new Chart(document.getElementById('productValueChart'), { type: 'doughnut', data: { labels, datasets: [{ data: valD, backgroundColor: colors, borderWidth: 0, hoverOffset: 20 }] }, options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold' } } } } } });
+                
                 const sampleProducts = products.filter(p => p.category && p.category.includes('样品'));
-                if (sampleChart) sampleChart.destroy(); sampleChart = new Chart(document.getElementById('sampleQtyChart'), { type: 'bar', data: { labels: sampleProducts.map(p => p.name), datasets: [{ data: sampleProducts.map(p => p.balance), backgroundColor: '#f59e0b', borderRadius: 8 }] }, options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+                if (sampleChart) sampleChart.destroy(); sampleChart = new Chart(document.getElementById('sampleQtyChart'), { type: 'bar', data: { labels: sampleProducts.map(p => p.name), datasets: [{ data: sampleProducts.map(p => p.balance), backgroundColor: '#f59e0b', borderRadius: 12, barThickness: 28 }] }, options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { display: false }, ticks: { font: { weight: '800' } } } } } });
+                
+                if(currentUser.role === 'admin' && leaderboard) {
+                    document.getElementById('perfList').innerHTML = leaderboard.map((u, i) => `<div class="p-5 bg-slate-50 rounded-[28px] flex items-center justify-between"><div class="flex items-center space-x-4"><div class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center font-black text-indigo-600">${i+1}</div><span class="font-black text-slate-700">${u.username}</span></div><span class="text-indigo-600 font-black">${u.totalOut} 包</span></div>`).join('');
+                }
+                lucide.createIcons();
             } catch (e) {}
-        }
-
-        function showInvDetail(id) {
-            const p = products.find(prod => prod.id === id); if(!p) return;
-            const factory = allFactories.find(f => f.id === p.factoryId);
-            document.getElementById('detailTitle').innerText = '产品档案全景回顾';
-            document.getElementById('detailContent').innerHTML = `
-                <div class="flex flex-col md:flex-row gap-8 items-start">
-                    <div class="w-full md:w-48 h-48 bg-slate-50 rounded-[32px] overflow-hidden shadow-inner flex-shrink-0">${p.image ? `<img src="${p.image}" onclick="previewImg('${p.image}')" class="w-full h-full object-cover cursor-zoom-in">` : '<div class="w-full h-full flex items-center justify-center text-xs text-slate-300">无图</div>'}</div>
-                    <div class="flex-1 space-y-4 w-full">
-                        <div class="flex items-center space-x-2"><span class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase">${p.category || '默认品类'}</span></div>
-                        <h2 class="text-3xl font-black text-slate-900">${p.name}</h2>
-                        <div class="grid grid-cols-2 gap-y-3">
-                            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">货号 SKU</div><div class="text-sm font-mono font-bold">${p.sku}</div>
-                            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">单价 (元)</div><div class="text-sm font-bold text-emerald-600">¥${(p.unitPrice||0).toFixed(2)}</div>
-                            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">包装规格</div><div class="text-sm font-bold">${p.packaging || '-'}</div>
-                            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">当前库存</div><div class="text-lg font-black text-indigo-600">${p.balance} 包</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100"><p class="text-[10px] text-slate-400 font-black uppercase mb-1">所属客户</p><p class="text-sm font-bold text-slate-700">${p.customerName || '样品 / 通用'}</p></div>
-                    <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100"><p class="text-[10px] text-slate-400 font-black uppercase mb-1">所属工厂</p><p class="text-sm font-bold text-slate-700">${factory?.name || '-'}</p></div>
-                </div>
-                ${p.notes ? `<div class="bg-amber-50 p-6 rounded-3xl border-2 border-amber-100 shadow-inner"><p class="text-[10px] text-amber-500 font-black uppercase mb-2">档案永久备注</p><p class="text-sm font-bold text-amber-800 leading-relaxed">${p.notes}</p></div>` : ''}
-            `;
-            openModal('detailModal');
-        }
-
-        function showTransDetail(id) {
-            api.get('/transactions').then(res => {
-                const t = res.data.find(trans => trans.id === id); if(!t) return;
-                const p = products.find(prod => prod.id === t.productId), isIn = t.type === 'in';
-                document.getElementById('detailTitle').innerText = '业务记录详细追溯';
-                document.getElementById('detailContent').innerHTML = `
-                    <div class="flex items-center justify-between mb-2"><span class="text-[10px] font-black text-slate-400">${new Date(t.date).toLocaleString()}</span><span class="px-4 py-1.5 rounded-full text-xs font-black ${isIn ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}">${isIn ? '入库记录' : '出库记录'}</span></div>
-                    <h2 class="text-3xl font-black text-slate-900">${p ? p.name : '已删产品'}</h2>
-                    <div class="grid grid-cols-2 gap-4"><div class="glass-card p-5"><p class="text-[10px] text-slate-400 font-bold uppercase mb-1">记账数量</p><p class="text-2xl font-black ${isIn ? 'text-emerald-600' : 'text-rose-600'}">${t.quantity} 包</p></div><div class="glass-card p-5"><p class="text-[10px] text-slate-400 font-bold uppercase mb-1">经办人员</p><p class="text-xl font-black text-slate-700">${t.username || '-'}</p></div></div>
-                    <div class="bg-slate-50 p-6 rounded-3xl space-y-4">
-                        <div class="flex justify-between items-center"><span class="text-xs font-bold text-slate-400 uppercase">订单单号</span><span class="text-sm font-mono font-black">${t.orderNo || '-'}</span></div>
-                        <div class="flex justify-between items-center"><span class="text-xs font-bold text-slate-400 uppercase">物流单号</span><span class="text-sm font-mono font-black text-indigo-600">${t.logisticsNo || '-'}</span></div>
-                    </div>
-                    ${t.image ? `<div class="space-y-2"><p class="text-[10px] text-slate-400 font-black uppercase">现场实拍留档</p><img src="${t.image}" onclick="previewImg('${t.image}')" class="w-full h-auto rounded-[32px] shadow-lg cursor-zoom-in"></div>` : ''}
-                    ${t.notes ? `<div class="bg-amber-100 p-6 rounded-3xl border border-amber-200 shadow-sm"><p class="text-[10px] text-amber-600 font-black mb-2 uppercase">单次流水备注</p><p class="text-sm font-black text-amber-900 leading-relaxed">${t.notes}</p></div>` : ''}
-                `;
-                openModal('detailModal');
-            });
         }
 
         async function renderInventory() {
@@ -391,28 +338,49 @@
                 const term = document.getElementById('invSearch').value.toLowerCase(); const sField = document.getElementById('invSortField').value;
                 let filtered = products.filter(p => p.name.toLowerCase().includes(term) || p.sku.toLowerCase().includes(term));
                 filtered.sort((a, b) => { let vA = a[sField], vB = b[sField]; if (sField === 'value') { vA = a.balance * (a.unitPrice || 0); vB = b.balance * (b.unitPrice || 0); } if (typeof vA === 'string') return (vA||'').localeCompare(vB||''); return (vB||0) - (vA||0); });
-                document.getElementById('invTable').innerHTML = filtered.map(p => {
-                    const fact = allFactories.find(f => f.id === p.factoryId), factTag = fact ? `<span class="px-2 py-0.5 rounded text-[8px] font-black text-white" style="background-color: ${fact.color}">${fact.name}</span>` : '';
-                    const custTag = p.customerName ? `<span class="px-2 py-0.5 rounded text-[8px] font-black bg-slate-100 text-slate-500 border border-slate-200">${p.customerName}</span>` : '', catTag = p.category ? `<span class="px-2 py-0.5 rounded text-[8px] font-black bg-indigo-50 text-indigo-500 border border-indigo-100">${p.category}</span>` : '';
-                    const notesInfo = p.notes ? `<div class="mt-2 p-2 bg-amber-50 border border-amber-100 rounded-xl text-[10px] font-bold text-amber-700 shadow-sm truncate max-w-[200px]">备注: ${p.notes}</div>` : '';
+                
+                const tableBody = document.getElementById('invTable');
+                if (tableBody) tableBody.innerHTML = filtered.map(p => {
+                    const fact = allFactories.find(f => f.id === p.factoryId), factTag = fact ? `<span class="px-3 py-1 rounded-lg text-[8px] font-black text-white" style="background-color: ${fact.color}">${fact.name}</span>` : '';
+                    const custTag = p.customerName ? `<span class="px-3 py-1 rounded-lg text-[8px] font-black bg-slate-100 text-slate-400 border border-slate-200">${p.customerName}</span>` : '', catTag = p.category ? `<span class="px-3 py-1 rounded-lg text-[8px] font-black bg-indigo-50 text-indigo-600 border border-indigo-100">${p.category}</span>` : '';
+                    const notesInfo = p.notes ? `<div class="mt-3 p-3 bg-amber-50 border border-amber-100 rounded-2xl text-[10px] font-bold text-amber-700 shadow-inner truncate max-w-[220px]">备注: ${p.notes}</div>` : '';
                     const isAdmin = currentUser.role === 'admin';
-                    
-                    return `<tr class="hover:bg-slate-50 transition-colors clickable-row group" onclick="showInvDetail('${p.id}')">
-                        <td class="p-6">${p.image ? `<img src="${p.image}" onclick="event.stopPropagation(); previewImg('${p.image}')" class="w-12 h-12 object-cover rounded-xl shadow-sm cursor-zoom-in hover:scale-110 transition-transform">` : '无图'}</td>
-                        <td class="p-6">
-                            <div class="flex items-center space-x-2">
-                                <span class="font-black text-slate-800">${p.name}</span>
-                                ${isAdmin ? `<button onclick="event.stopPropagation(); openEditModal('${p.id}')" class="p-1 text-indigo-400 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-all"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button><button onclick="event.stopPropagation(); doDeleteProduct('${p.id}')" class="p-1 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
+                    return `
+                    <tr class="hover:bg-slate-50 transition-all clickable-row group animate-in slide-in-from-bottom-2" onclick="showInvDetail('${p.id}')">
+                        <td class="p-8">${p.image ? `<img src="${p.image}" onclick="event.stopPropagation(); previewImg('${p.image}')" class="w-16 h-16 object-cover rounded-2xl shadow-md cursor-zoom-in active:scale-125 transition-transform">` : '<div class="w-16 h-16 bg-slate-50 rounded-2xl border border-dashed flex items-center justify-center text-[10px] text-slate-300">无图</div>'}</td>
+                        <td class="p-8">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <span class="font-black text-slate-800 text-lg">${p.name}</span>
+                                ${isAdmin ? `<button onclick="event.stopPropagation(); openEditModal('${p.id}')" class="p-2 text-indigo-400 hover:bg-indigo-50 rounded-lg transition-colors"><i data-lucide="edit-3" class="w-4 h-4"></i></button><button onclick="event.stopPropagation(); doDeleteProduct('${p.id}')" class="p-2 text-rose-300 hover:bg-rose-50 rounded-lg transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
                             </div>
-                            <div class="font-mono text-[10px] text-slate-400">${p.sku}</div>
-                            ${p.packaging?`<div class="text-[10px] text-indigo-400 font-bold">${p.packaging}</div>`:''}${notesInfo}
+                            <div class="font-mono text-xs text-slate-400 tracking-wider">${p.sku}</div>
+                            ${p.packaging?`<div class="text-[10px] text-indigo-500 font-black mt-2 bg-indigo-50/50 px-2 py-0.5 rounded-md inline-block">${p.packaging}</div>`:''}
+                            ${notesInfo}
                         </td>
-                        <td class="p-6 text-center"><div class="flex flex-col space-y-1 items-center">${catTag}${custTag}${factTag}</div></td>
-                        <td class="p-6 text-sm text-slate-400">¥${(p.unitPrice||0).toFixed(2)}<br><span class="text-lg font-black text-indigo-600">${p.balance}</span></td>
-                        <td class="p-6 text-xs text-slate-400 font-bold text-center">${p.creatorName || '系统'}</td>
-                        <td class="p-6 text-right font-black text-xl text-emerald-600">¥${(p.balance * (p.unitPrice||0)).toFixed(2)}</td>
+                        <td class="p-8 text-center"><div class="flex flex-col space-y-2 items-center">${catTag}${custTag}${factTag}</div></td>
+                        <td class="p-8 text-sm text-slate-400 font-bold">¥${(p.unitPrice||0).toFixed(2)}<br><span class="text-2xl font-black text-slate-900">${p.balance}</span> <span class="text-[10px] text-slate-400 uppercase">Bags</span></td>
+                        <td class="p-8 text-xs text-slate-400 font-black text-center">${p.creatorName || 'SYSTEM'}</td>
+                        <td class="p-8 text-right font-black text-2xl text-emerald-600">¥${(p.balance * (p.unitPrice||0)).toFixed(2)}</td>
                     </tr>`}).join('');
-                document.getElementById('invMobile').innerHTML = filtered.map(p => `<div class="glass-card p-5 space-y-3 clickable-row" onclick="showInvDetail('${p.id}')"><div class="flex items-center space-x-4"><div class="flex-shrink-0">${p.image ? `<img src="${p.image}" onclick="event.stopPropagation(); previewImg('${p.image}')" class="w-16 h-16 object-cover rounded-2xl cursor-zoom-in">` : '无图'}</div><div class="flex-1 min-w-0"><h4 class="font-black truncate text-lg">${p.name}</h4><p class="text-[10px] text-slate-400 uppercase font-bold">${p.category || '默认'} | ${p.customerName || '样品'}</p></div><div class="text-right font-black text-emerald-600">¥${(p.balance * (p.unitPrice||0)).toFixed(2)}</div></div>${p.notes ? `<div class="bg-amber-50 p-3 rounded-xl border border-amber-100 text-[11px] font-bold text-amber-700 truncate">备注: ${p.notes}</div>` : ''}</div>`).join('');
+
+                document.getElementById('invMobile').innerHTML = filtered.map(p => {
+                    const isAdmin = currentUser.role === 'admin';
+                    const actBtns = isAdmin ? `<div class="grid grid-cols-2 gap-3 mt-4"><button onclick="event.stopPropagation(); openEditModal('${p.id}')" class="bg-indigo-50 text-indigo-600 py-3.5 rounded-[18px] text-[11px] font-black flex items-center justify-center border border-indigo-100 active:scale-95 transition-all"><i data-lucide="edit-3" class="w-3.5 h-3.5 mr-2"></i>修改档案</button><button onclick="event.stopPropagation(); doDeleteProduct('${p.id}')" class="bg-rose-50 text-rose-600 py-3.5 rounded-[18px] text-[11px] font-black flex items-center justify-center border border-rose-100 active:scale-95 transition-all"><i data-lucide="trash-2" class="w-3.5 h-3.5 mr-2"></i>彻底删除</button></div>` : '';
+                    return `
+                    <div class="glass-card p-6 space-y-4 clickable-row active:bg-slate-50 transition-all animate-in slide-in-from-right-4" onclick="showInvDetail('${p.id}')">
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0">${p.image ? `<img src="${p.image}" onclick="event.stopPropagation(); previewImg('${p.image}')" class="w-20 h-20 object-cover rounded-[20px] shadow-lg cursor-zoom-in">` : '<div class="w-20 h-20 bg-slate-50 rounded-[20px] border border-dashed flex items-center justify-center text-[10px] text-slate-300">无图</div>'}</div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-black text-xl text-slate-900 tracking-tighter truncate">${p.name}</h4>
+                                <div class="flex flex-wrap gap-1.5 mt-2"><span class="px-2 py-0.5 bg-indigo-50 text-indigo-500 rounded-md text-[9px] font-black uppercase tracking-tighter">${p.category || '默认'}</span><span class="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-md text-[9px] font-black tracking-tighter truncate max-w-[80px]">${p.customerName || '通用'}</span></div>
+                                <p class="text-[10px] text-slate-300 font-mono mt-2 tracking-widest">${p.sku}</p>
+                            </div>
+                            <div class="text-right flex-shrink-0"><p class="text-2xl font-black text-emerald-600 tracking-tighter">¥${(p.balance * (p.unitPrice||0)).toFixed(2)}</p><p class="text-[10px] font-black text-indigo-400 bg-indigo-50/50 px-2 py-0.5 rounded-full inline-block mt-1">存量: ${p.balance}</p></div>
+                        </div>
+                        ${p.notes ? `<div class="bg-amber-50/60 p-4 rounded-[20px] border border-amber-100 text-[11px] font-bold text-amber-800 leading-relaxed truncate">备注: ${p.notes}</div>` : ''}
+                        ${actBtns}
+                    </div>`;
+                }).join('');
                 lucide.createIcons();
             } catch (e) {}
         }
@@ -423,41 +391,109 @@
                 const sField = document.getElementById('transSortField').value; let sorted = tRes.data.slice().reverse();
                 if (sField === 'quantity') sorted.sort((a,b) => b.quantity - a.quantity);
                 document.getElementById('transList').innerHTML = sorted.map(t => {
-                    const p = products.find(prod => prod.id === t.productId), isIn = t.type === 'in', pr = p ? (p.unitPrice || 0) : 0;
-                    const custInfo = p?.customerName ? `<span class="px-2 py-0.5 rounded text-[8px] font-black bg-slate-100 text-slate-500 border border-slate-200 ml-2 align-middle">${p.customerName}</span>` : '', catTag = p?.category ? `<span class="px-2 py-0.5 rounded text-[8px] font-black bg-indigo-50 text-indigo-500 border border-indigo-100 ml-2 align-middle">${p.category}</span>` : '';
-                    const isAdmin = currentUser.role === 'admin';
-                    
-                    return `<div class="glass-card p-6 border-l-[6px] ${isIn ? 'border-emerald-500' : 'border-rose-500'} transition-all hover:shadow-lg clickable-row group" onclick="showTransDetail('${t.id}')">
-                        <div class="flex justify-between mb-4">
-                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${new Date(t.date).toLocaleString()}</span>
-                            <div class="flex items-center space-x-2">
-                                ${isAdmin ? `<button onclick="event.stopPropagation(); doDeleteTrans('${t.id}')" class="p-1 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
-                                <span class="px-3 py-1 rounded-full text-[10px] font-black ${isIn ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}">${isIn ? '入库' : '出库'}</span>
+                    const p = products.find(prod => prod.id === t.productId), isIn = t.type === 'in', isAdmin = currentUser.role === 'admin';
+                    const custInfo = p?.customerName ? `<span class="px-2 py-0.5 rounded-md text-[9px] font-black bg-slate-100 text-slate-400 border border-slate-200 ml-2 align-middle">${p.customerName}</span>` : '', catTag = p?.category ? `<span class="px-2 py-0.5 rounded-md text-[9px] font-black bg-indigo-50 text-indigo-600 border border-indigo-100 ml-2 align-middle uppercase">${p.category}</span>` : '';
+                    return `
+                    <div class="glass-card p-6 md:p-8 border-l-[8px] ${isIn ? 'border-emerald-500' : 'border-rose-500'} transition-all hover:shadow-2xl clickable-row active:bg-slate-50 group animate-in fade-in slide-in-from-bottom-4" onclick="showTransDetail('${t.id}')">
+                        <div class="flex justify-between mb-6">
+                            <span class="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">${new Date(t.date).toLocaleString()}</span>
+                            <div class="flex items-center space-x-3">
+                                ${isAdmin ? `<button onclick="event.stopPropagation(); doDeleteTrans('${t.id}')" class="p-2 text-slate-200 hover:text-rose-500 active:scale-75 transition-all"><i data-lucide="trash-2" class="w-5 h-5"></i></button>` : ''}
+                                <span class="px-4 py-1.5 rounded-full text-[10px] font-black ${isIn ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'} uppercase tracking-widest">${isIn ? 'Inbound' : 'Outbound'}</span>
                             </div>
                         </div>
-                        <div class="flex items-start space-x-4">${t.image ? `<img src="${t.image}" onclick="event.stopPropagation(); previewImg('${t.image}')" class="w-24 h-24 object-cover rounded-3xl shadow-sm cursor-zoom-in">` : ''}<div class="flex-1"><h4 class="font-black text-slate-800 text-xl">${(p?p.name:'已删') + catTag + custInfo}</h4><div class="flex justify-between items-end mt-4"><div class="text-[10px] text-slate-400 uppercase font-black space-y-1"><div>订单: <span class="text-slate-900">${t.orderNo || '-'}</span></div><div>物流: <span class="text-indigo-600">${t.logisticsNo || '-'}</span></div><div>经办: <span class="text-slate-600">${t.username || '-'}</span></div></div><div class="text-right font-black"><p class="text-2xl text-slate-900 mb-1">¥${(t.quantity * pr).toFixed(2)}</p><p class="${isIn ? 'text-emerald-600' : 'text-rose-600'} text-sm">数量: ${t.quantity} 包</p></div></div></div></div>${t.notes ? `<div class="mt-4 p-4 bg-amber-100 border border-amber-200 rounded-2xl shadow-sm text-xs font-black text-amber-800 flex items-start truncate"><i data-lucide="info" class="w-4 h-4 mr-2 mt-0.5 flex-shrink-0"></i><div>${t.notes}</div></div>` : ''}</div>`;
+                        <div class="flex items-start space-x-6">
+                            <div class="flex-shrink-0">${t.image ? `<img src="${t.image}" onclick="event.stopPropagation(); previewImg('${t.image}')" class="w-24 h-24 object-cover rounded-[28px] shadow-xl shadow-slate-200 cursor-zoom-in active:scale-110 transition-transform">` : '<div class="w-24 h-24 bg-slate-50 rounded-[28px] border-2 border-dashed flex items-center justify-center text-[10px] text-slate-200">No Image</div>'}</div>
+                            <div class="flex-1">
+                                <h4 class="font-black text-slate-900 text-2xl tracking-tighter mb-4">${(p?p.name:'PRODUCT REMOVED') + catTag + custInfo}</h4>
+                                <div class="flex justify-between items-end">
+                                    <div class="text-[11px] text-slate-400 font-bold space-y-2 uppercase tracking-tighter">
+                                        <div class="flex items-center"><i data-lucide="hash" class="w-3 h-3 mr-2"></i>订单: <span class="text-slate-800 ml-1 font-black">${t.orderNo || '-'}</span></div>
+                                        <div class="flex items-center text-indigo-500"><i data-lucide="truck" class="w-3 h-3 mr-2"></i>物流: <span class="ml-1 font-black">${t.logisticsNo || '-'}</span></div>
+                                        <div class="flex items-center"><i data-lucide="user" class="w-3 h-3 mr-2"></i>经办: <span class="ml-1">${t.username || '-'}</span></div>
+                                    </div>
+                                    <div class="text-right font-black"><p class="text-3xl text-slate-900 mb-1 tracking-tighter">¥${(t.quantity * (p?.unitPrice||0)).toFixed(2)}</p><p class="${isIn ? 'text-emerald-600' : 'text-rose-600'} text-sm bg-${isIn ? 'emerald' : 'rose'}-50/50 px-3 py-1 rounded-full inline-block uppercase">Qty: ${t.quantity}</p></div>
+                                </div>
+                            </div>
+                        </div>
+                        ${t.notes ? `<div class="mt-6 p-5 bg-amber-50 border border-amber-100 rounded-[24px] shadow-inner text-xs font-black text-amber-800 flex items-start truncate"><i data-lucide="info" class="w-4 h-4 mr-3 mt-0.5 flex-shrink-0 text-amber-400"></i><div>${t.notes}</div></div>` : ''}
+                    </div>`;
                 }).join('');
                 lucide.createIcons();
             } catch (e) {}
         }
 
-        async function doDeleteProduct(id) { if (!confirm('确定彻底删除该产品档案吗？相关流水也会受影响。')) return; try { await api.delete(`/products/${id}`); toast('✅ 档案已清除', 'bg-emerald-500'); await renderInventory(); } catch (e) { toast('❌ ' + (e.response?.data?.message || '无法删除'), 'bg-red-500'); } }
-        async function doDeleteTrans(id) { if (!confirm('确定删除该笔流水记录吗？')) return; try { await api.delete(`/transactions/${id}`); toast('✅ 流水已移除', 'bg-emerald-500'); await renderTrans(); } catch (e) { toast('❌ 删除失败', 'bg-red-500'); } }
+        function showInvDetail(id) {
+            const p = products.find(prod => prod.id === id); if(!p) return;
+            const factory = allFactories.find(f => f.id === p.factoryId);
+            document.getElementById('detailTitle').innerText = '产品档案全景追溯';
+            document.getElementById('detailContent').innerHTML = `
+                <div class="flex flex-col md:flex-row gap-10 items-start">
+                    <div class="w-full md:w-64 h-64 bg-slate-50 rounded-[40px] overflow-hidden shadow-2xl flex-shrink-0">
+                        ${p.image ? `<img src="${p.image}" onclick="previewImg('${p.image}')" class="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform">` : '<div class="w-full h-full flex items-center justify-center text-slate-300 font-black">NO IMAGE</div>'}
+                    </div>
+                    <div class="flex-1 space-y-6 w-full">
+                        <span class="px-4 py-1.5 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-200 inline-block">${p.category || '默认品类'}</span>
+                        <h2 class="text-5xl font-black text-slate-900 tracking-tighter leading-tight">${p.name}</h2>
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-5 pt-4 border-t border-slate-100">
+                            <div><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">货号 SKU</p><p class="text-lg font-black font-mono text-slate-700">${p.sku}</p></div>
+                            <div><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">单价 PRICE</p><p class="text-lg font-black text-emerald-600">¥${(p.unitPrice||0).toFixed(2)}</p></div>
+                            <div><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">包装规格 UNIT</p><p class="text-lg font-black text-slate-700">${p.packaging || '-'}</p></div>
+                            <div><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">实时库存 STOCK</p><p class="text-3xl font-black text-indigo-600 tracking-tighter">${p.balance} <span class="text-sm">包</span></p></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-slate-50 p-8 rounded-[36px] border border-slate-100/50 shadow-sm"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-3">合作客户 PARTNER</p><p class="text-xl font-black text-slate-800">${p.customerName || '通用 / 样品库'}</p></div>
+                    <div class="bg-slate-50 p-8 rounded-[36px] border border-slate-100/50 shadow-sm"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-3">代工厂 FACTORY</p><p class="text-xl font-black text-slate-800">${factory?.name || '-'}</p></div>
+                </div>
+                ${p.notes ? `<div class="bg-amber-50 p-10 rounded-[40px] border-4 border-amber-100 shadow-inner"><p class="text-[10px] text-amber-500 font-black uppercase tracking-widest mb-4">档案永久备注 (Master Notes)</p><p class="text-lg font-black text-amber-900 leading-relaxed italic">"${p.notes}"</p></div>` : ''}
+            `;
+            openModal('detailModal');
+        }
+
+        function showTransDetail(id) {
+            api.get('/transactions').then(res => {
+                const t = res.data.find(trans => trans.id === id); if(!t) return;
+                const p = products.find(prod => prod.id === t.productId), isIn = t.type === 'in';
+                document.getElementById('detailTitle').innerText = '业务记录详细追溯';
+                document.getElementById('detailContent').innerHTML = `
+                    <div class="flex items-center justify-between mb-6 bg-slate-900 p-6 rounded-[32px] text-white shadow-2xl">
+                        <div class="flex items-center"><i data-lucide="clock" class="w-4 h-4 mr-3 text-slate-400"></i><span class="text-xs font-black uppercase tracking-widest">${new Date(t.date).toLocaleString()}</span></div>
+                        <span class="px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest ${isIn ? 'bg-emerald-500' : 'bg-rose-500'}">${isIn ? 'Inventory In' : 'Outbound Order'}</span>
+                    </div>
+                    <h2 class="text-5xl font-black text-slate-900 tracking-tighter mb-8">${p ? p.name : '已删除产品'}</h2>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="glass-card p-8 border-b-[8px] ${isIn ? 'border-emerald-500' : 'border-rose-500'}"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">变动数量</p><p class="text-4xl font-black ${isIn ? 'text-emerald-600' : 'text-rose-600'} tracking-tighter">${isIn?'+':'-'}${t.quantity} <span class="text-lg">包</span></p></div>
+                        <div class="glass-card p-8"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">业务经办</p><p class="text-2xl font-black text-slate-700">${t.username || '-'}</p></div>
+                    </div>
+                    <div class="bg-slate-50 p-8 rounded-[40px] border border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-8 shadow-inner">
+                        <div class="space-y-2"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">订单关联号</p><p class="text-xl font-black font-mono text-slate-800">${t.orderNo || '-'}</p></div>
+                        <div class="space-y-2"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">物流追踪单号</p><p class="text-xl font-black font-mono text-indigo-600">${t.logisticsNo || '-'}</p></div>
+                    </div>
+                    ${t.image ? `<div class="space-y-4"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest px-2">现场实拍留档</p><div class="rounded-[48px] overflow-hidden shadow-2xl border-8 border-white"><img src="${t.image}" onclick="previewImg('${t.image}')" class="w-full h-auto cursor-zoom-in active:scale-105 transition-transform"></div></div>` : ''}
+                    ${t.notes ? `<div class="bg-slate-900 p-10 rounded-[40px] text-white shadow-2xl"><p class="text-[10px] text-slate-500 font-black mb-4 uppercase tracking-widest">业务交代备注</p><p class="text-xl font-black leading-relaxed italic text-indigo-200">"${t.notes}"</p></div>` : ''}
+                `;
+                lucide.createIcons();
+                openModal('detailModal');
+            });
+        }
 
         async function doSaveProduct() {
             const btn = document.getElementById('btnSaveProd'); if (btn.disabled) return;
             const catVal = pCat.value || '', isS = catVal.includes('样品'), isP = catVal.includes('盒') || catVal.includes('袋');
-            if (!catVal) return toast('❌ 品类必填', 'bg-red-500');
-            if (!isP && !pFact.value) return toast('❌ 工厂必填', 'bg-red-500');
-            if (!isS && !pCust.value.trim()) return toast('❌ 非样品须填客户', 'bg-red-500');
+            if (!catVal) return toast('⚠️ 请先选择所属品类', 'bg-amber-500');
+            if (!isP && !pFact.value) return toast('⚠️ 该产品须指派工厂', 'bg-amber-500');
+            if (!isS && !pCust.value.trim()) return toast('⚠️ 正式产品须填写客户', 'bg-amber-500');
             try {
-                btn.disabled = true; const custObj = await getOrCreateCustomer(pCust.value, pCustAddr.value, pCustPhone.value);
+                btn.disabled = true; btn.innerText = '正在上传数据...';
+                const custObj = await getOrCreateCustomer(pCust.value, pCustAddr.value, pCustPhone.value);
                 const fd = new FormData(); fd.append('name', pName.value); fd.append('sku', pSku.value); fd.append('packaging', pPack.value); fd.append('unitPrice', pPrice.value || 0); fd.append('category', catVal); fd.append('factoryId', pFact.value || ''); fd.append('customerId', custObj ? custObj.id : ''); fd.append('customerName', custObj ? custObj.name : '无客户/样品'); fd.append('spec', pSpec.value); fd.append('material', pMat.value); fd.append('notes', pNotes.value);
                 if (pImage.files[0]) fd.append('image', pImage.files[0]);
                 const eid = document.getElementById('editProdId').value;
                 if (eid) await api.put(`/products/${eid}`, fd); else await api.post('/products', fd);
-                closeModal('prodModal'); renderInventory(); toast('✅ 保存成功', 'bg-emerald-500');
-            } catch (e) { toast('❌ 存档失败', 'bg-red-500'); } finally { btn.disabled = false; }
+                closeModal('prodModal'); renderInventory(); toast('✅ 产品档案保存成功', 'bg-emerald-600');
+            } catch (e) { toast('❌ 存档失败', 'bg-red-600'); } finally { btn.disabled = false; btn.innerText = '保存存档'; }
         }
 
         async function doSaveTrans() {
@@ -467,108 +503,45 @@
                 btn.disabled = true; let pid = tProd.value; const finalNotes = isN ? qNotes.value : tNotes.value;
                 if (isN) {
                     const catVal = qCat.value || '', isS = catVal.includes('样品'), isP = catVal.includes('盒') || catVal.includes('袋');
-                    if (!catVal) { btn.disabled = false; return toast('❌ 品类必填', 'bg-red-500'); }
-                    if (!isP && !qFact.value) { btn.disabled = false; return toast('❌ 工厂必填', 'bg-red-500'); }
-                    if (!isS && !qCust.value.trim()) { btn.disabled = false; return toast('❌ 非样品须填客户', 'bg-red-500'); }
+                    if (!catVal || (!isP && !qFact.value) || (!isS && !qCust.value.trim())) { btn.disabled = false; return toast('⚠️ 新产品信息不完整', 'bg-amber-500'); }
                     const custObj = await getOrCreateCustomer(qCust.value, qCustAddr.value, qCustPhone.value);
                     const fd = new FormData(); fd.append('name', qName.value); fd.append('sku', qSku.value); fd.append('unitPrice', qPrice.value || 0); fd.append('category', catVal); fd.append('factoryId', qFact.value || ''); fd.append('customerId', custObj ? custObj.id : ''); fd.append('customerName', custObj ? custObj.name : '无客户/样品'); fd.append('packaging', qPack.value); fd.append('notes', qNotes.value);
                     if (qImage.files[0]) fd.append('image', qImage.files[0]);
                     const r = await api.post('/products', fd); pid = r.data.id;
                 }
+                if (!pid && !isN) { btn.disabled = false; return toast('⚠️ 请选择产品', 'bg-amber-500'); }
                 const tfd = new FormData(); tfd.append('productId', pid); tfd.append('type', tType.value); tfd.append('quantity', tQty.value); tfd.append('orderNo', tOrder.value); tfd.append('logisticsNo', tLog.value); tfd.append('notes', finalNotes);
                 if (tImage.files[0]) tfd.append('transImage', tImage.files[0]);
-                await api.post('/transactions', tfd); closeModal('transModal'); renderTrans(); toast('✅ 提交成功并同步台账', 'bg-emerald-500');
+                await api.post('/transactions', tfd); closeModal('transModal'); renderTrans(); toast('✅ 业务记录已入库', 'bg-emerald-600');
                 document.getElementById('isNew').checked = false; toggleQuickFields();
                 tProd.value=''; tOrder.value=''; tLog.value=''; tQty.value=''; tNotes.value=''; tImage.value='';
-                qCat.value=''; qFact.value=''; qCust.value=''; qCustAddr.value=''; qCustPhone.value=''; 
-                qName.value=''; qPrice.value=''; qSku.value=''; qPack.value=''; qNotes.value=''; qImage.value='';
-            } catch (e) { toast('❌ 失败', 'bg-red-500'); } finally { btn.disabled = false; }
+                qCat.value=''; qFact.value=''; qCust.value=''; qCustAddr.value=''; qCustPhone.value=''; qName.value=''; qPrice.value=''; qSku.value=''; qPack.value=''; qNotes.value=''; qImage.value='';
+            } catch (e) { toast('❌ 提交失败', 'bg-red-600'); } finally { btn.disabled = false; }
         }
 
-        function updateProductSelects() { const el = document.getElementById('tProd'); if(el) el.innerHTML = '<option value="" disabled selected>选择产品...</option>' + products.map(p => `<option value="${p.id}">${p.name} (${p.sku})</option>`).join(''); }
-        
+        function updateProductSelects() { const el = document.getElementById('tProd'); if(el) el.innerHTML = '<option value="" disabled selected>🔍 搜索并选择产品...</option>' + products.map(p => `<option value="${p.id}">${p.name} [${p.sku}]</option>`).join(''); }
+        function openAddProdModal() { document.getElementById('editProdId').value = ''; pCust.value=''; pCustAddr.value=''; pCustPhone.value=''; pName.value=''; pSku.value=''; pPrice.value=''; pPack.value=''; pNotes.value=''; pImage.value=''; openModal('prodModal'); }
         function openEditModal(id) {
-            const p = products.find(prod => prod.id === id);
-            if (!p) return;
-            clearErrors();
-            document.getElementById('prodModalTitle').innerText = '编辑档案信息';
-            document.getElementById('editProdId').value = p.id;
-            document.getElementById('pFact').value = p.factoryId || '';
-            document.getElementById('pCust').value = p.customerName || '';
-            document.getElementById('pCustAddr').value = ''; // 编辑时不强制回显地址电话，保持简洁
-            document.getElementById('pCustPhone').value = '';
-            document.getElementById('pCat').value = p.category || '';
-            document.getElementById('pName').value = p.name;
-            document.getElementById('pSku').value = p.sku;
-            document.getElementById('pPrice').value = p.unitPrice || 0;
-            document.getElementById('pPack').value = p.packaging || '';
-            document.getElementById('pSpec').value = p.spec || '';
-            document.getElementById('pMat').value = p.material || '';
-            document.getElementById('pNotes').value = p.notes || '';
+            const p = products.find(prod => prod.id === id); if (!p) return;
+            document.getElementById('editProdId').value = p.id; pCat.value = p.category || ''; pFact.value = p.factoryId || ''; pCust.value = p.customerName || ''; pName.value = p.name; pSku.value = p.sku; pPrice.value = p.unitPrice || 0; pPack.value = p.packaging || ''; pSpec.value = p.spec || ''; pMat.value = p.material || ''; pNotes.value = p.notes || '';
             openModal('prodModal');
         }
-
-        function openAddProdModal() { 
-            document.getElementById('editProdId').value = ''; 
-            document.getElementById('prodModalTitle').innerText = '建立新款档案';
-            pCust.value=''; pCustAddr.value=''; pCustPhone.value=''; pName.value=''; pSku.value=''; pPrice.value=''; pPack.value=''; pNotes.value=''; pImage.value=''; 
-            openModal('prodModal'); 
-        }
-        function openModal(id) { 
-            const el = document.getElementById(id); 
-            if(el) {
-                el.classList.remove('hidden');
-                document.body.style.overflow = 'hidden'; // 禁止背景滚动
-            }
-        }
-        function closeModal(id) { 
-            const el = document.getElementById(id); 
-            if(el) {
-                el.classList.add('hidden');
-                document.body.style.overflow = ''; // 恢复背景滚动
-            }
-        }
-        
-        function setError(id, msg) {
-            const el = document.getElementById(id);
-            if (el) el.classList.add('border-rose-500', 'ring-2');
-            toast(`⚠️ ${msg}`, 'bg-amber-500');
-        }
-
-        function clearErrors() {
-            document.querySelectorAll('input, select, textarea').forEach(el => el.classList.remove('border-rose-500', 'ring-2'));
-        }
-
         function toggleQuickFields() { const isN = document.getElementById('isNew').checked; document.getElementById('oldPBox').classList.toggle('hidden', isN); document.getElementById('newPBox').classList.toggle('hidden', !isN); }
-        function toast(m, b) { const t = document.getElementById('toast'); t.innerText = m; t.className = `fixed top-6 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-full shadow-2xl transition-all duration-300 font-black text-sm text-white ${b}`; t.classList.remove('hidden'); setTimeout(() => t.classList.add('hidden'), 3000); }
-        function logout() { localStorage.clear(); location.reload(); }
         async function fetchCategories() { try { const res = await api.get('/categories'); allCategories = res.data; const opts = allCategories.map(c => `<option value="${c}">${c}</option>`).join(''); document.getElementById('pCat').innerHTML = opts; document.getElementById('qCat').innerHTML = opts; renderCategoryUI(); } catch (e) {} }
-        function renderCategoryUI() { const el = document.getElementById('categoryList'); if (el) el.innerHTML = allCategories.map(c => `<div class="flex items-center space-x-1 px-3 py-1.5 bg-slate-100 rounded-full text-xs font-bold text-slate-600"><span>${c}</span><button onclick="removeCategory('${c}')"><i data-lucide="x" class="w-3 h-3 hover:text-rose-500"></i></button></div>`).join(''); lucide.createIcons(); }
+        function renderCategoryUI() { const el = document.getElementById('categoryList'); if (el) el.innerHTML = allCategories.map(c => `<div class="flex items-center space-x-2 px-5 py-3 bg-white border border-slate-100 rounded-2xl shadow-sm text-sm font-black text-slate-600 animate-in zoom-in-95"><span>${c}</span><button onclick="removeCategory('${c}')" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button></div>`).join(''); lucide.createIcons(); }
         async function addCategory() { const name = document.getElementById('newCatName').value.trim(); if (!name) return; try { await api.post('/categories', { name }); document.getElementById('newCatName').value = ''; await fetchCategories(); } catch (e) {} }
-        async function removeCategory(name) { if (confirm(`确定删除?`)) { await api.delete(`/categories/${name}`); await fetchCategories(); } }
+        async function removeCategory(name) { if (confirm(`确认删除?`)) { await api.delete(`/categories/${name}`); await fetchCategories(); } }
         
-        async function login() { const btn = document.getElementById('btnLogin'); btn.disabled=true; btn.innerText='登录中...'; try { const res = await api.post('/login', { username: username.value, password: password.value }); localStorage.setItem('token', res.data.token); localStorage.setItem('user', JSON.stringify(res.data.user)); location.reload(); } catch (e) { toast('❌ 失败', 'bg-red-600'); btn.disabled=false; btn.innerText='登录'; } }
-        async function register() { 
-            const data = { username: username.value, password: password.value, phone: regPhone.value, question: regQuestion.value, answer: regAnswer.value };
-            try { await api.post('/register', data); toast('✅ 注册成功', 'bg-emerald-500'); setTimeout(()=>toggleAuth(false), 1500); } catch (e) { toast('❌ ' + (e.response?.data?.message || '失败'), 'bg-red-500'); } 
-        }
-        async function updateProfile(isUserOnly) { const payload = isUserOnly ? { newUsername: document.getElementById('settingNewUsername').value } : { oldPassword: oldPass.value, newPassword: newPass.value }; try { await api.post('/update-profile', payload); toast('✅ 成功', 'bg-emerald-500'); if (isUserOnly) setTimeout(() => location.reload(), 1000); else { oldPass.value = ''; newPass.value = ''; } } catch (e) { toast('❌ 失败', 'bg-red-500'); } }
-        function toggleAuth(r) { document.getElementById('authTitle').innerText = r ? '注册账号' : '欢迎回来'; document.getElementById('loginGroup').classList.toggle('hidden', r); document.getElementById('regGroup').classList.toggle('hidden', !r); document.getElementById('forgotGroup').classList.add('hidden'); }
-        function showForgotPassword() { document.getElementById('authTitle').innerText = '重置密码'; document.getElementById('loginGroup').classList.add('hidden'); document.getElementById('regGroup').classList.add('hidden'); document.getElementById('forgotGroup').classList.remove('hidden'); document.getElementById('forgotStep1').classList.remove('hidden'); document.getElementById('forgotStep2').classList.add('hidden'); }
-        async function verifyUserForForgot() { try { const res = await api.post('/forgot-password-verify', { username: username.value }); document.getElementById('displayQuestion').innerText = '密保问题: ' + res.data.question; document.getElementById('forgotStep1').classList.add('hidden'); document.getElementById('forgotStep2').classList.remove('hidden'); } catch (e) { toast('❌ 用户不存在或未设密保', 'bg-red-500'); } }
-        async function resetPasswordNow() { try { await api.post('/reset-password-now', { username: username.value, phone: forgotPhone.value, answer: forgotAnswer.value, newPassword: forgotNewPass.value }); toast('✅ 密码已重置，请登录', 'bg-emerald-500'); setTimeout(()=>location.reload(), 1500); } catch (e) { toast('❌ 验证失败', 'bg-red-500'); } }
-        function toggleSidebar() { 
-            const sb = document.getElementById('sidebar');
-            const ov = document.getElementById('sidebarOverlay');
-            if (sb.classList.contains('-translate-x-full')) {
-                sb.classList.remove('-translate-x-full');
-                ov.classList.remove('hidden');
-            } else {
-                sb.classList.add('-translate-x-full');
-                ov.classList.add('hidden');
-            }
-        }
-        async function downloadBackup() { const r = await api.get('/backup', { responseType: 'blob' }); const url = window.URL.createObjectURL(new Blob([r.data])); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `备份_${new Date().toLocaleDateString()}.json`); link.click(); }
+        async function login() { const btn = document.getElementById('btnLogin'); btn.disabled=true; btn.innerText='SIGNING IN...'; try { const res = await api.post('/login', { username: username.value, password: password.value }); localStorage.setItem('token', res.data.token); localStorage.setItem('user', JSON.stringify(res.data.user)); location.reload(); } catch (e) { toast('❌ CREDENTIALS INVALID', 'bg-red-600'); btn.disabled=false; btn.innerText='LOG IN'; } }
+        async function register() { const data = { username: username.value, password: password.value, phone: regPhone.value, question: regQuestion.value, answer: regAnswer.value }; try { await api.post('/register', data); toast('✅ ACCOUNT CREATED', 'bg-emerald-500'); setTimeout(()=>toggleAuth(false), 1500); } catch (e) { toast('❌ '+ (e.response?.data?.message || 'ERROR'), 'bg-red-600'); } }
+        async function verifyUserForForgot() { try { const res = await api.get('/forgot-password-verify', { params: { username: username.value } }); document.getElementById('displayQuestion').innerText = 'SECRET QUESTION: ' + res.data.question; document.getElementById('forgotStep1').classList.add('hidden'); document.getElementById('forgotStep2').classList.remove('hidden'); } catch (e) { toast('❌ USER NOT FOUND', 'bg-red-600'); } }
+        // ... (remaining scripts: resetPasswordNow, updateProfile, etc. updated with improved toast and logic)
+        async function resetPasswordNow() { try { await api.post('/reset-password-now', { username: username.value, phone: forgotPhone.value, answer: forgotAnswer.value, newPassword: forgotNewPass.value }); toast('✅ PASSWORD RESET SUCCESS', 'bg-emerald-600'); setTimeout(()=>location.reload(), 1500); } catch (e) { toast('❌ VERIFICATION FAILED', 'bg-red-600'); } }
+        async function updateProfile(isUserOnly) { const payload = isUserOnly ? { newUsername: document.getElementById('settingNewUsername').value } : { oldPassword: oldPass.value, newPassword: newPass.value }; try { await api.post('/update-profile', payload); toast('✅ PROFILE UPDATED', 'bg-emerald-600'); if (isUserOnly) setTimeout(() => location.reload(), 1000); else { oldPass.value = ''; newPass.value = ''; } } catch (e) { toast('❌ UPDATE FAILED', 'bg-red-600'); } }
+        function toggleAuth(r) { document.getElementById('authTitle').innerText = r ? 'REGISTER' : 'WELCOME'; document.getElementById('loginGroup').classList.toggle('hidden', r); document.getElementById('regGroup').classList.toggle('hidden', !r); document.getElementById('forgotGroup').classList.add('hidden'); }
+        function showForgotPassword() { document.getElementById('authTitle').innerText = 'RESET'; document.getElementById('loginGroup').classList.add('hidden'); document.getElementById('regGroup').classList.add('hidden'); document.getElementById('forgotGroup').classList.remove('hidden'); document.getElementById('forgotStep1').classList.remove('hidden'); document.getElementById('forgotStep2').classList.add('hidden'); }
+        async function downloadBackup() { const r = await api.get('/backup', { responseType: 'blob' }); const url = window.URL.createObjectURL(new Blob([r.data])); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `BACKUP_${new Date().toLocaleDateString()}.json`); link.click(); }
+        function logout() { localStorage.clear(); location.reload(); }
         initApp();
     </script>
 </body>
