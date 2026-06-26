@@ -514,8 +514,20 @@
             pCust.value=''; pCustAddr.value=''; pCustPhone.value=''; pName.value=''; pSku.value=''; pPrice.value=''; pPack.value=''; pNotes.value=''; pImage.value=''; 
             openModal('prodModal'); 
         }
-        function openModal(id) { const el = document.getElementById(id); if(el) el.classList.remove('hidden'); }
-        function closeModal(id) { const el = document.getElementById(id); if(el) el.classList.add('hidden'); }
+        function openModal(id) { 
+            const el = document.getElementById(id); 
+            if(el) {
+                el.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // 禁止背景滚动
+            }
+        }
+        function closeModal(id) { 
+            const el = document.getElementById(id); 
+            if(el) {
+                el.classList.add('hidden');
+                document.body.style.overflow = ''; // 恢复背景滚动
+            }
+        }
         
         function setError(id, msg) {
             const el = document.getElementById(id);
@@ -545,7 +557,17 @@
         function showForgotPassword() { document.getElementById('authTitle').innerText = '重置密码'; document.getElementById('loginGroup').classList.add('hidden'); document.getElementById('regGroup').classList.add('hidden'); document.getElementById('forgotGroup').classList.remove('hidden'); document.getElementById('forgotStep1').classList.remove('hidden'); document.getElementById('forgotStep2').classList.add('hidden'); }
         async function verifyUserForForgot() { try { const res = await api.post('/forgot-password-verify', { username: username.value }); document.getElementById('displayQuestion').innerText = '密保问题: ' + res.data.question; document.getElementById('forgotStep1').classList.add('hidden'); document.getElementById('forgotStep2').classList.remove('hidden'); } catch (e) { toast('❌ 用户不存在或未设密保', 'bg-red-500'); } }
         async function resetPasswordNow() { try { await api.post('/reset-password-now', { username: username.value, phone: forgotPhone.value, answer: forgotAnswer.value, newPassword: forgotNewPass.value }); toast('✅ 密码已重置，请登录', 'bg-emerald-500'); setTimeout(()=>location.reload(), 1500); } catch (e) { toast('❌ 验证失败', 'bg-red-500'); } }
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('sidebarOverlay').classList.toggle('hidden'); }
+        function toggleSidebar() { 
+            const sb = document.getElementById('sidebar');
+            const ov = document.getElementById('sidebarOverlay');
+            if (sb.classList.contains('-translate-x-full')) {
+                sb.classList.remove('-translate-x-full');
+                ov.classList.remove('hidden');
+            } else {
+                sb.classList.add('-translate-x-full');
+                ov.classList.add('hidden');
+            }
+        }
         async function downloadBackup() { const r = await api.get('/backup', { responseType: 'blob' }); const url = window.URL.createObjectURL(new Blob([r.data])); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `备份_${new Date().toLocaleDateString()}.json`); link.click(); }
         initApp();
     </script>
