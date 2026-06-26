@@ -223,9 +223,31 @@
         let qtyChart = null, valueChart = null, sampleChart = null;
 
         function previewImg(url) { const over = document.getElementById('imgPreviewOverlay'); const img = document.getElementById('imgPreviewContent'); img.src = url; over.classList.remove('hidden'); }
-        function openModal(id) { const el = document.getElementById(id); if(el) { el.classList.remove('hidden'); document.body.style.overflow = 'hidden'; } }
-        function closeModal(id) { const el = document.getElementById(id); if(el) { el.classList.add('hidden'); document.body.style.overflow = ''; } }
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('sidebarOverlay').classList.toggle('hidden'); }
+        function openModal(id) { 
+            const el = document.getElementById(id); 
+            if(el) {
+                el.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; 
+            }
+        }
+        function closeModal(id) { 
+            const el = document.getElementById(id); 
+            if(el) {
+                el.classList.add('hidden');
+                document.body.style.overflow = ''; 
+            }
+        }
+        function toggleSidebar(forceClose = false) {
+            const sb = document.getElementById('sidebar');
+            const ov = document.getElementById('sidebarOverlay');
+            if (forceClose || !sb.classList.contains('-translate-x-full')) {
+                sb.classList.add('-translate-x-full');
+                ov.classList.add('hidden');
+            } else {
+                sb.classList.remove('-translate-x-full');
+                ov.classList.remove('hidden');
+            }
+        }
         function toast(m, b) { const t = document.getElementById('toast'); t.innerText = m; t.className = `fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] px-8 py-5 rounded-[32px] shadow-2xl transition-all duration-500 font-black text-sm text-white ${b}`; t.classList.remove('hidden'); setTimeout(() => t.classList.add('hidden'), 3500); }
 
         function initApp() {
@@ -297,13 +319,20 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             const pg = document.getElementById(`page-${id}`); if(pg) { pg.classList.remove('hidden'); void pg.offsetWidth; pg.classList.add('page-enter'); }
             const nav = document.getElementById(`nav-${id}`); if(nav) nav.classList.add('active');
+
+            // 切换页面时强制关闭所有可能悬浮的蒙版/弹窗
+            document.querySelectorAll('#prodModal, #transModal, #detailModal, #factoryModal, #customerModal, #imgPreviewOverlay').forEach(el => el.classList.add('hidden'));
+            document.body.style.overflow = '';
+
             if (id === 'dashboard') loadDash();
             if (id === 'inventory') renderInventory();
             if (id === 'transactions') renderTrans();
             if (id === 'factories') renderFactoryUI();
             if (id === 'customers') renderCustomerUI();
             if (id === 'settings') { renderCategoryUI(); if(currentUser.role==='admin') fetchUsers(); }
-            if (window.innerWidth < 768 && !document.getElementById('sidebar').classList.contains('-translate-x-full')) toggleSidebar();
+            
+            // 移动端自动收起侧边栏
+            if (window.innerWidth < 768) toggleSidebar(true);
         }
 
         async function loadDash() {
