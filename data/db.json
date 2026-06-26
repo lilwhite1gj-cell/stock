@@ -3,13 +3,25 @@
     {
       "id": "1",
       "username": "admin",
-      "password": "$2b$10$iRdxfxr8AY4CgvDmNlZ6COp3ZXGMsjN0/jZOCsT0s5XQbeVbaKqz.",
+      "password": "$2b$10$Lg2buH48CK0/LutlZXF1l.PrGMN5IYj.tQs3iFXggIOcQ0OD.SGTa",
       "role": "admin"
     },
     {
       "id": "2",
       "username": "staff",
-      "password": "$2b$10$8Z7IYA.oV4yF5q6/oia6BOe3pkK.jAXIlFPJ22J6ViT3CIHE6aTQi",
+      "password": "$2b$10$sPQ9/cjGyqOyZPisAqizt.ZOl0HC9UJ/gVIp/5czwnaKeMjX7k/ni",
+      "role": "staff"
+    },
+    {
+      "id": "1782438519378",
+      "username": "杨逸恺",
+      "password": "$2b$10$YnUjhCy5q6Z6.q990r1IUe6dUiR5boUp1TyhqN0RtiDJZavhXp.Wm",
+      "role": "staff"
+    },
+    {
+      "id": "1782465078274",
+      "username": "小白",
+      "password": "$2b$10$f.WLWxgfM0a/0Pixgq1dueEcDYKGf5XY.Ebc4hot0.981sdBWIgJS",
       "role": "staff"
     }
   ],
@@ -18,19 +30,106 @@
       "id": "1782371987576",
       "name": "新嘴贴",
       "sku": "1",
-      "category": "自动录入",
+      "category": "嘴贴",
       "image": null,
-      "createdBy": "1"
+      "createdBy": "1",
+      "spec": "2*2",
+      "material": "无纺布",
+      "unitPrice": 2,
+      "creatorName": "admin"
     },
     {
-      "id": "1782373318618",
-      "name": "123",
-      "sku": "234",
-      "category": "快速建档",
-      "spec": "123",
-      "material": "543",
-      "image": "/uploads/1782373318613.jpg",
-      "createdBy": "1"
+      "id": "1782442001015",
+      "name": "bibi",
+      "sku": "123",
+      "category": "嘴贴",
+      "spec": "1*1",
+      "material": "pvc",
+      "unitPrice": 1,
+      "image": null,
+      "createdBy": "1",
+      "creatorName": "admin"
+    },
+    {
+      "id": "1782446444912",
+      "name": "1234",
+      "sku": "123",
+      "category": "定制鼻贴",
+      "spec": "1*1",
+      "material": "pvc",
+      "unitPrice": 5,
+      "image": "/uploads/1782446444905.png",
+      "createdBy": "1",
+      "creatorName": "admin"
+    },
+    {
+      "id": "1782460960470",
+      "name": "口鼻贴",
+      "sku": "1234",
+      "category": "嘴贴",
+      "spec": "",
+      "material": "",
+      "unitPrice": 100,
+      "packaging": "30",
+      "factoryId": "1782455668291",
+      "factoryName": null,
+      "customerId": "1782460732983",
+      "customerName": "小蓝",
+      "image": "/uploads/1782460960454.png",
+      "createdBy": "1",
+      "creatorName": "admin"
+    },
+    {
+      "id": "1782462149926",
+      "name": "hezi",
+      "sku": "123",
+      "category": "纸盒",
+      "spec": "",
+      "material": "",
+      "unitPrice": 50,
+      "packaging": "30",
+      "factoryId": "1782455668291",
+      "factoryName": null,
+      "customerId": "1782462149894",
+      "customerName": "小绿",
+      "image": "/uploads/1782462149915.png",
+      "createdBy": "1",
+      "creatorName": "admin"
+    },
+    {
+      "id": "1782462212768",
+      "name": "zhihe",
+      "sku": "123",
+      "category": "纸盒",
+      "spec": "",
+      "material": "",
+      "unitPrice": 555,
+      "packaging": "",
+      "factoryId": "1782455668291",
+      "factoryName": null,
+      "customerId": "1782462149894",
+      "customerName": "小绿",
+      "image": "/uploads/1782462212765.png",
+      "createdBy": "1",
+      "creatorName": "admin"
+    },
+    {
+      "id": "1782466774835",
+      "name": "耳机",
+      "sku": "123",
+      "category": "鼻贴",
+      "spec": "",
+      "material": "",
+      "unitPrice": 150,
+      "packaging": "30",
+      "notes": "测试",
+      "factoryId": "1782455668291",
+      "factoryName": null,
+      "customerId": "1782466774810",
+      "customerName": "小红",
+      "image": "/uploads/1782466774831.png",
+      "createdBy": "1",
+      "creatorName": "admin"
     }
   ],
   "transactions": [
@@ -45,40 +144,126 @@
       "notes": ""
     },
     {
-      "id": "1782373318641",
-      "productId": "1782373318618",
+      "id": "1782442001024",
+      "productId": "1782442001015",
       "type": "in",
-      "quantity": 10,
+      "quantity": 100,
       "userId": "1",
       "username": "admin",
-      "date": "2026-06-25T07:41:58.641Z",
-      "notes": "",
-      "orderNo": "12345",
-      "logisticsNo": "12345"
-    },
-    {
-      "id": "1782373960197",
-      "productId": "1782371987576",
-      "type": "out",
-      "quantity": 5,
-      "userId": "1",
-      "username": "admin",
-      "date": "2026-06-25T07:52:40.197Z",
+      "date": "2026-06-26T02:46:41.024Z",
       "notes": "",
       "orderNo": "1234",
-      "logisticsNo": "1234"
+      "logisticsNo": "1234",
+      "image": null
     },
     {
-      "id": "1782373980779",
-      "productId": "1782371987576",
-      "type": "out",
-      "quantity": 5,
+      "id": "1782446444919",
+      "productId": "1782446444912",
+      "type": "in",
+      "quantity": 100,
       "userId": "1",
       "username": "admin",
-      "date": "2026-06-25T07:53:00.780Z",
-      "notes": "没有时间",
+      "date": "2026-06-26T04:00:44.919Z",
+      "notes": "",
       "orderNo": "1234",
-      "logisticsNo": "1234"
+      "logisticsNo": "1234",
+      "image": null
+    },
+    {
+      "id": "1782460960480",
+      "productId": "1782460960470",
+      "type": "in",
+      "quantity": 100,
+      "userId": "1",
+      "username": "admin",
+      "date": "2026-06-26T08:02:40.480Z",
+      "notes": "无",
+      "orderNo": "1234",
+      "logisticsNo": "1234",
+      "image": "/uploads/1782460960478.png"
+    },
+    {
+      "id": "1782462149941",
+      "productId": "1782462149926",
+      "type": "in",
+      "quantity": 50,
+      "userId": "1",
+      "username": "admin",
+      "date": "2026-06-26T08:22:29.941Z",
+      "notes": "无",
+      "orderNo": "1234",
+      "logisticsNo": "1234",
+      "image": "/uploads/1782462149936.png"
+    },
+    {
+      "id": "1782462212777",
+      "productId": "1782462212768",
+      "type": "in",
+      "quantity": 50,
+      "userId": "1",
+      "username": "admin",
+      "date": "2026-06-26T08:23:32.777Z",
+      "notes": "",
+      "orderNo": "1234",
+      "logisticsNo": "1234",
+      "image": "/uploads/1782462212775.png"
+    },
+    {
+      "id": "1782466774867",
+      "productId": "1782466774835",
+      "type": "in",
+      "quantity": 100,
+      "userId": "1",
+      "username": "admin",
+      "date": "2026-06-26T09:39:34.867Z",
+      "notes": "测试",
+      "orderNo": "1234",
+      "logisticsNo": "1234",
+      "image": "/uploads/1782466774844.jpg"
+    }
+  ],
+  "categories": [
+    "嘴贴",
+    "鼻贴",
+    "定制鼻贴",
+    "样品",
+    "纸盒"
+  ],
+  "factories": [
+    {
+      "id": "1782455668291",
+      "name": "宏霖楷",
+      "address": "泉州",
+      "color": "#6366f1"
+    },
+    {
+      "id": "1782455679698",
+      "name": "华为",
+      "address": "深圳",
+      "color": "#10b981"
+    }
+  ],
+  "customers": [
+    {
+      "id": "1782460732983",
+      "name": "小蓝",
+      "contact": "",
+      "address": "泉州",
+      "phone": "110"
+    },
+    {
+      "id": "1782462149894",
+      "name": "小绿",
+      "contact": "",
+      "address": "泉州",
+      "phone": "120"
+    },
+    {
+      "id": "1782466774810",
+      "name": "小红",
+      "contact": "",
+      "address": "泉州",
+      "phone": "130"
     }
   ]
 }
