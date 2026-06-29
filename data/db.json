@@ -144,6 +144,38 @@
       "image": null,
       "createdBy": "1",
       "creatorName": "admin"
+    },
+    {
+      "name": "yangpin",
+      "category": "样品",
+      "unitPrice": 0,
+      "currency": "CNY",
+      "factoryId": "",
+      "packaging": "",
+      "sku": "",
+      "spec": "",
+      "material": "",
+      "customerName": "通用",
+      "id": "1782725620637",
+      "image": null,
+      "createdBy": "1",
+      "creatorName": "admin"
+    },
+    {
+      "name": "yangpin",
+      "category": "样品",
+      "unitPrice": 0,
+      "currency": "CNY",
+      "factoryId": "",
+      "packaging": "",
+      "sku": "",
+      "spec": "",
+      "material": "",
+      "customerName": "通用",
+      "id": "1782725648713",
+      "image": null,
+      "createdBy": "1",
+      "creatorName": "admin"
     }
   ],
   "transactions": [
@@ -246,6 +278,32 @@
       "userId": "1",
       "username": "admin",
       "date": "2026-06-29T08:21:35.735Z",
+      "image": null
+    },
+    {
+      "productId": "1782725620637",
+      "type": "in",
+      "quantity": 101,
+      "orderNo": "",
+      "logisticsNo": "",
+      "notes": "",
+      "id": "1782725620653",
+      "userId": "1",
+      "username": "admin",
+      "date": "2026-06-29T09:33:40.653Z",
+      "image": null
+    },
+    {
+      "productId": "1782725648713",
+      "type": "in",
+      "quantity": 100,
+      "orderNo": "",
+      "logisticsNo": "",
+      "notes": "",
+      "id": "1782725648730",
+      "userId": "1",
+      "username": "admin",
+      "date": "2026-06-29T09:34:08.730Z",
       "image": null
     }
   ],

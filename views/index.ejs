@@ -43,14 +43,23 @@
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         
-        /* 新增：图片悬停放大特效 */
-        .hover-zoom-trigger { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: zoom-in; position: relative; z-index: 10; }
-        .hover-zoom-trigger:hover { 
-            transform: scale(3.5) translateX(20px); 
-            z-index: 600 !important; 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            border-color: #6366f1 !important;
+        /* 图片悬停放大特效 - 增强版 */
+        .hover-zoom-trigger { 
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; 
+            cursor: zoom-in; 
+            position: relative; 
+            z-index: 10;
+            will-change: transform;
+            transform-origin: left center; /* 从左向右展开，避开侧边栏 */
         }
+        .hover-zoom-trigger:hover { 
+            transform: scale(3.8) translateX(15px); 
+            z-index: 999 !important; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+        }
+        /* 确保表格容器不拦截溢出内容 */
+        .table-container-fix { overflow: visible !important; }
         
         .error-bubble { color: #e11d48; font-size: 10px; font-weight: 800; margin-top: 4px; animation: shake 0.4s ease; }
         @keyframes shake { 0%,100% {transform:translateX(0)} 25% {transform:translateX(-4px)} 75% {transform:translateX(4px)} }
@@ -143,7 +152,7 @@
                         <div class="flex bg-white px-4 py-1 rounded-[22px] border border-slate-100 shadow-sm focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all"><i data-lucide="search" class="m-4 text-slate-300"></i><input type="text" id="invSearch" oninput="renderInventory()" placeholder="搜索产品名称、货号..." class="flex-1 bg-transparent outline-none font-bold text-lg"></div>
                         <div class="flex items-center space-x-3 bg-white px-6 py-4 rounded-[22px] shadow-sm border border-slate-100 self-end md:self-start"><span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sort By:</span><select id="invSortField" onchange="renderInventory()" class="bg-transparent outline-none font-black text-sm text-indigo-600"><option value="id">录入时间</option><option value="name">产品名称</option><option value="customerName">客户维度</option><option value="balance">库存量</option><option value="value">资产价值</option></select></div>
                     </div>
-                    <div class="hidden md:block glass-card">
+                    <div class="hidden md:block glass-card table-container-fix">
                         <table class="w-full text-left border-collapse table-fixed">
                             <thead class="bg-slate-50/50 border-b border-slate-100">
                                 <tr>
@@ -183,11 +192,75 @@
 
                 <div id="page-settings" class="page-content hidden space-y-8 page-enter">
                     <h2 class="text-4xl font-black text-slate-900 tracking-tighter">系统中心</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="glass-card p-10 space-y-8"><h3 class="text-xl font-black border-b border-slate-100 pb-4 text-center text-slate-700">账号个人信息</h3><div class="space-y-4"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center block">当前显示姓名</label><input type="text" id="settingNewUsername" class="w-full bg-slate-50 p-5 rounded-[22px] font-black border-0 outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all text-center text-lg"><button onclick="updateProfile(true)" class="w-full bg-slate-900 text-white py-5 rounded-[22px] font-black shadow-xl active:scale-95 transition-transform">同步更新档案</button></div></div>
-                        <div class="glass-card p-10 space-y-8"><h3 class="text-xl font-black border-b border-slate-100 pb-4 text-center text-slate-700">安全密钥管理</h3><div class="space-y-4"><input type="password" id="oldPass" placeholder="当前旧密码" class="w-full bg-slate-50 p-5 rounded-[22px] border-0 text-center"><input type="password" id="newPass" placeholder="设置新密钥 (不少于6位)" class="w-full bg-slate-50 p-5 rounded-[22px] border-0 text-center"><button onclick="updateProfile(false)" class="w-full bg-indigo-600 text-white py-5 rounded-[22px] font-black shadow-xl active:scale-95 transition-transform">立即确认重置</button></div></div>
-                        <div class="admin-only hidden glass-card p-10 space-y-8 lg:col-span-2"><h3 class="text-xl font-black border-b border-slate-100 pb-4 flex items-center justify-center text-slate-700"><i data-lucide="users" class="mr-3"></i>全员账号分级管理</h3><div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead class="bg-slate-50/50"><tr><th class="p-6 text-[10px] font-black text-slate-400">用户</th><th class="p-6 text-[10px] font-black text-slate-400">权限级别</th><th class="p-6 text-[10px] font-black text-slate-400">预留手机</th><th class="p-6 text-right text-[10px] font-black text-slate-400">权限操作</th></tr></thead><tbody id="userListTable" class="divide-y divide-slate-50"></tbody></table></div></div>
-                        <div class="admin-only hidden glass-card p-10 space-y-8 lg:col-span-2"><h3 class="text-xl font-black border-b border-slate-100 pb-4 flex items-center justify-center text-slate-700"><i data-lucide="tags" class="mr-3"></i>业务品类自定义维护</h3><div class="flex space-x-3"><input type="text" id="newCatName" class="flex-1 bg-slate-50 p-5 rounded-[22px] font-bold border-0 outline-none focus:ring-4 focus:ring-indigo-500/10" placeholder="录入新品类..."><button onclick="addCategory()" class="bg-amber-500 text-white px-10 rounded-[22px] font-black active:scale-95 shadow-lg shadow-amber-100">立即添加</button></div><div id="categoryList" class="flex flex-wrap gap-3"></div></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                        <!-- 个人资料 -->
+                        <div class="glass-card p-6 md:p-10 space-y-6 md:space-y-8">
+                            <div class="flex items-center space-x-4 border-b border-slate-100 pb-4">
+                                <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600"><i data-lucide="user"></i></div>
+                                <h3 class="text-xl font-black text-slate-700">账号个人信息</h3>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1">当前显示姓名</label>
+                                    <input type="text" id="settingNewUsername" class="w-full bg-slate-50 p-4 md:p-5 rounded-[22px] font-black border-0 outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all text-lg text-slate-700">
+                                </div>
+                                <button onclick="updateProfile(true)" class="w-full bg-slate-900 text-white py-4 md:py-5 rounded-[22px] font-black shadow-xl active:scale-95 transition-transform">同步更新档案</button>
+                            </div>
+                        </div>
+
+                        <!-- 密码修改 -->
+                        <div class="glass-card p-6 md:p-10 space-y-6 md:space-y-8">
+                            <div class="flex items-center space-x-4 border-b border-slate-100 pb-4">
+                                <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600"><i data-lucide="lock"></i></div>
+                                <h3 class="text-xl font-black text-slate-700">安全密钥管理</h3>
+                            </div>
+                            <div class="space-y-4">
+                                <input type="password" id="oldPass" placeholder="当前旧密码" class="w-full bg-slate-50 p-4 md:p-5 rounded-[22px] border-0 outline-none focus:ring-4 focus:ring-rose-500/10 transition-all">
+                                <input type="password" id="newPass" placeholder="设置新密钥 (不少于6位)" class="w-full bg-slate-50 p-4 md:p-5 rounded-[22px] border-0 outline-none focus:ring-4 focus:ring-rose-500/10 transition-all">
+                                <button onclick="updateProfile(false)" class="w-full bg-indigo-600 text-white py-4 md:py-5 rounded-[22px] font-black shadow-xl active:scale-95 transition-transform">立即确认重置</button>
+                            </div>
+                        </div>
+
+                        <!-- 账号管理 (管理员可见) -->
+                        <div class="admin-only hidden glass-card p-6 md:p-10 space-y-6 md:space-y-8 lg:col-span-2">
+                            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600"><i data-lucide="shield-check"></i></div>
+                                    <h3 class="text-xl font-black text-slate-700">全员账号分级管理</h3>
+                                </div>
+                                <span class="hidden md:inline px-3 py-1 bg-slate-100 text-slate-400 rounded-lg text-[10px] font-black uppercase tracking-widest">Global Access</span>
+                            </div>
+                            <div class="overflow-hidden rounded-3xl border border-slate-50 shadow-inner">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse min-w-[600px]">
+                                        <thead class="bg-slate-50/50">
+                                            <tr>
+                                                <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">用户信息</th>
+                                                <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">权限级别</th>
+                                                <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">预留手机</th>
+                                                <th class="p-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">权限操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="userListTable" class="divide-y divide-slate-50"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 品类维护 (管理员可见) -->
+                        <div class="admin-only hidden glass-card p-6 md:p-10 space-y-6 md:space-y-8 lg:col-span-2">
+                            <div class="flex items-center space-x-4 border-b border-slate-100 pb-4">
+                                <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600"><i data-lucide="tags"></i></div>
+                                <h3 class="text-xl font-black text-slate-700">业务品类自定义维护</h3>
+                            </div>
+                            <div class="space-y-6">
+                                <div class="flex flex-col md:flex-row gap-3">
+                                    <input type="text" id="newCatName" class="flex-1 bg-slate-50 p-4 md:p-5 rounded-[22px] font-bold border-0 outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" placeholder="录入新品类名称...">
+                                    <button onclick="addCategory()" class="bg-amber-500 text-white px-8 md:px-10 py-4 md:py-0 rounded-[22px] font-black active:scale-95 shadow-lg shadow-amber-200/50 transition-all">立即添加</button>
+                                </div>
+                                <div id="categoryList" class="flex flex-wrap gap-2 md:gap-3 p-6 bg-slate-50/50 rounded-[32px] border border-slate-50 min-h-[100px]"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -314,15 +387,26 @@
         }
 
         function showPage(id) {
-            document.querySelectorAll('.fixed.inset-0').forEach(el => { if(!el.id.includes('sidebar')) el.classList.add('hidden'); });
+            // 彻底清除所有可能的残留蒙版
+            document.querySelectorAll('.fixed.inset-0').forEach(el => { 
+                if(!el.id.includes('sidebar')) el.classList.add('hidden'); 
+            });
+            // 额外确保侧边栏蒙版也关闭
+            getEl('sidebarOverlay').classList.add('hidden');
+            getEl('sidebar').classList.add('-translate-x-full');
+            
             document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            getEl(`page-${id}`).classList.remove('hidden'); getEl(`nav-${id}`).classList.add('active');
-            document.body.style.overflow = '';
-            if (id === 'dashboard') loadDash(); if (id === 'inventory') renderInventory(); if (id === 'transactions') renderTrans();
-            if (id === 'factories') renderFactoryUI(); if (id === 'customers') renderCustomerUI();
+            getEl(`page-${id}`).classList.remove('hidden'); 
+            getEl(`nav-${id}`).classList.add('active');
+            document.body.style.overflow = ''; 
+            
+            if (id === 'dashboard') loadDash(); 
+            if (id === 'inventory') renderInventory(); 
+            if (id === 'transactions') renderTrans();
+            if (id === 'factories') renderFactoryUI(); 
+            if (id === 'customers') renderCustomerUI();
             if (id === 'settings' && currentUser.role !== 'staff') fetchUsers();
-            if (window.innerWidth < 768) getEl('sidebar').classList.add('-translate-x-full');
         }
 
         async function loadDash() {
@@ -348,7 +432,13 @@
             try {
                 const res = await api.get('/inventory'); products = res.data; updateProductSelects();
                 const term = getEl('invSearch').value.toLowerCase(); const sortField = getEl('invSortField').value;
-                let filtered = products.filter(p => p.name.toLowerCase().includes(term) || p.sku.toLowerCase().includes(term));
+                let filtered = products.filter(p => {
+                    const isAdmin = currentUser.role === 'admin' || currentUser.role === 'manager';
+                    const isSample = p.category && p.category.includes('样品');
+                    const isMine = p.createdBy === currentUser.id;
+                    const matchesSearch = p.name.toLowerCase().includes(term) || p.sku.toLowerCase().includes(term);
+                    return matchesSearch && (isAdmin || isSample || isMine);
+                });
                 filtered.sort((a, b) => { let vA = a[sortField], vB = b[sortField]; if (sortField === 'value') { vA = a.balance * a.unitPrice; vB = b.balance * b.unitPrice; } return (typeof vA === 'string') ? vA.localeCompare(vB) : vB - vA; });
                 getEl('invTable').innerHTML = filtered.map(p => {
                     const fact = allFactories.find(f => f.id === p.factoryId); const isAdmin = currentUser.role !== 'staff';
