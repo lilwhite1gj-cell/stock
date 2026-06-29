@@ -130,6 +130,20 @@
       "image": "/uploads/1782466774831.png",
       "createdBy": "1",
       "creatorName": "admin"
+    },
+    {
+      "name": "zuitie111",
+      "category": "嘴贴",
+      "unitPrice": 111,
+      "currency": "CNY",
+      "factoryId": "1782455679698",
+      "packaging": "333",
+      "sku": "222",
+      "customerName": "小蓝",
+      "id": "1782721295721",
+      "image": null,
+      "createdBy": "1",
+      "creatorName": "admin"
     }
   ],
   "transactions": [
@@ -220,14 +234,26 @@
       "orderNo": "1234",
       "logisticsNo": "1234",
       "image": "/uploads/1782466774844.jpg"
+    },
+    {
+      "productId": "1782721295721",
+      "type": "in",
+      "quantity": 120,
+      "orderNo": "444",
+      "logisticsNo": "555",
+      "notes": "",
+      "id": "1782721295735",
+      "userId": "1",
+      "username": "admin",
+      "date": "2026-06-29T08:21:35.735Z",
+      "image": null
     }
   ],
   "categories": [
     "嘴贴",
     "鼻贴",
     "定制鼻贴",
-    "样品",
-    "纸盒"
+    "样品"
   ],
   "factories": [
     {
