@@ -30,11 +30,14 @@
                 animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); 
                 display: flex; flex-direction: column;
                 box-shadow: 0 -25px 50px -12px rgba(0,0,0,0.2);
+                z-index: 300;
             }
             .modal-handle { width: 40px; height: 5px; background: #e2e8f0; border-radius: 10px; margin: 0 auto 15px; flex-shrink: 0; }
             @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-            .modal-scroll { padding-bottom: 60px; padding-left: 20px; padding-right: 20px; }
-            .glass-card { border-radius: 28px; }
+            .modal-scroll { padding-bottom: 80px; padding-left: 20px; padding-right: 20px; }
+            .glass-card { border-radius: 32px; padding: 1.25rem !important; }
+            .text-4xl { font-size: 1.875rem !important; line-height: 2.25rem !important; }
+            .p-10 { padding: 1.5rem !important; }
         }
         .modal-scroll { overflow-y: auto !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         .detail-scroll-fix { overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
@@ -387,20 +390,32 @@
         }
 
         function showPage(id) {
-            // 彻底清除所有可能的残留蒙版
-            document.querySelectorAll('.fixed.inset-0').forEach(el => { 
-                if(!el.id.includes('sidebar')) el.classList.add('hidden'); 
+            // 彻底清除所有可能的残留蒙版和弹窗
+            const overlays = ['sidebarOverlay', 'prodModal', 'transModal', 'detailModal', 'factoryModal', 'customerModal', 'imgPreviewOverlay'];
+            overlays.forEach(oid => {
+                const el = getEl(oid);
+                if(el) el.classList.add('hidden');
             });
-            // 额外确保侧边栏蒙版也关闭
-            getEl('sidebarOverlay').classList.add('hidden');
+            
+            // 确保侧边栏在移动端导航后立即收起
             getEl('sidebar').classList.add('-translate-x-full');
             
+            // 切换内容区域
             document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            getEl(`page-${id}`).classList.remove('hidden'); 
-            getEl(`nav-${id}`).classList.add('active');
-            document.body.style.overflow = ''; 
             
+            const targetPage = getEl(`page-${id}`);
+            const targetNav = getEl(`nav-${id}`);
+            
+            if(targetPage) targetPage.classList.remove('hidden');
+            if(targetNav) targetNav.classList.add('active');
+            
+            // 重置滚动条位置和溢出属性
+            document.body.style.overflow = '';
+            const main = getEl('mainContainer');
+            if(main) main.scrollTop = 0;
+            
+            // 触发对应页面的数据加载
             if (id === 'dashboard') loadDash(); 
             if (id === 'inventory') renderInventory(); 
             if (id === 'transactions') renderTrans();
@@ -552,19 +567,38 @@
 
         function updateDynamicHints(prefix) {
             const cat = getEl(prefix + 'Cat').value || '';
-            const isS = cat.includes('样品'), isP = cat.includes('盒') || cat.includes('袋');
-            const map = { Cust: isS, Price: isS, Fact: isS || isP, Pack: isS || isP };
-            for(let k in map) {
-                const el = getEl(prefix + k); if(!el) continue;
-                const base = (el.getAttribute('placeholder') || el.options?.[0]?.text || '').replace(' (选填)', '');
-                if(map[k]) { 
-                    if(el.tagName==='SELECT') { if(el.options[0]) el.options[0].text=base+' (选填)'; } else el.setAttribute('placeholder',base+' (选填)');
-                    el.classList.add('bg-slate-50','text-slate-400'); el.classList.remove('bg-white','bg-slate-100');
+            const isSample = cat.includes('样品');
+            
+            // 定义在“样品”模式下变为选填的字段后缀
+            const optionalSuffixes = ['Sku', 'Cust', 'Fact', 'Price', 'Curr', 'Pack', 'Notes', 'CustAddr', 'CustPhone'];
+            
+            optionalSuffixes.forEach(s => {
+                const el = getEl(prefix + s);
+                if(!el) return;
+                
+                // 获取不含“(选填)”的基础提示文字
+                const baseHint = (el.getAttribute('placeholder') || (el.options && el.options[0] ? el.options[0].text : '')).replace(' (选填)', '');
+                
+                if(isSample) {
+                    // 设置为选填样式
+                    if(el.tagName === 'SELECT') {
+                        if(el.options[0]) el.options[0].text = baseHint + ' (选填)';
+                    } else {
+                        el.setAttribute('placeholder', baseHint + ' (选填)');
+                    }
+                    el.classList.add('bg-slate-50', 'text-slate-400');
+                    el.classList.remove('bg-white', 'bg-slate-100');
                 } else {
-                    if(el.tagName==='SELECT') { if(el.options[0]) el.options[0].text=base; } else el.setAttribute('placeholder',base);
-                    el.classList.remove('bg-slate-50','text-slate-400'); el.classList.add(prefix==='p'?'bg-slate-100':'bg-white');
+                    // 恢复为必填样式
+                    if(el.tagName === 'SELECT') {
+                        if(el.options[0]) el.options[0].text = baseHint;
+                    } else {
+                        el.setAttribute('placeholder', baseHint);
+                    }
+                    el.classList.remove('bg-slate-50', 'text-slate-400');
+                    el.classList.add(prefix === 'p' ? 'bg-slate-100' : 'bg-white');
                 }
-            }
+            });
         }
 
         async function getOrCreateCustomer(name, addr, phone) {
@@ -761,10 +795,24 @@
                 const res = await api.get('/admin/users');
                 getEl('userListTable').innerHTML = res.data.map(u => {
                     const isS = currentUser.role === 'admin', self = u.id === currentUser.id;
-                    let btns = `<button onclick="resetUserPassword('${u.id}','${u.username}')" class="bg-white border border-slate-200 px-4 py-2 rounded-xl text-slate-600 font-black text-xs shadow-sm hover:bg-slate-50">重置密码</button>`;
-                    if(isS && !self && u.role === 'staff') btns += `<button onclick="changeRole('${u.id}','manager')" class="ml-3 bg-emerald-50 border border-emerald-100 text-emerald-600 px-4 py-2 rounded-xl font-black text-xs shadow-sm">提升为管理员</button>`;
-                    if(isS && !self && u.role === 'manager') btns += `<button onclick="changeRole('${u.id}','staff')" class="ml-3 bg-rose-50 border border-rose-100 text-rose-500 px-4 py-2 rounded-xl font-black text-xs shadow-sm">撤销管理权限</button>`;
-                    return `<tr class="text-sm border-b border-slate-50 hover:bg-slate-50/50 transition-colors"><td class="p-6"><div class="flex items-center space-x-3"><div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-400 text-xs">${u.username.charAt(0).toUpperCase()}</div><div class="font-black text-slate-700">${u.username} ${self?'(本人)':''}</div></div></td><td class="p-6 uppercase font-bold text-slate-300 text-[10px] tracking-widest">${u.role}</td><td class="p-6 text-slate-400 font-mono text-xs">${u.phone||'-'}</td><td class="p-6 text-right">${btns}</td></tr>`;
+                    let btns = `<button onclick="resetUserPassword('${u.id}','${u.username}')" class="bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-slate-600 font-black text-[10px] shadow-sm hover:bg-slate-50">重置密码</button>`;
+                    if(isS && !self && u.role === 'staff') btns += `<button onclick="changeRole('${u.id}','manager')" class="ml-2 bg-emerald-50 border border-emerald-100 text-emerald-600 px-3 py-1.5 rounded-lg font-black text-[10px] shadow-sm">提升</button>`;
+                    if(isS && !self && u.role === 'manager') btns += `<button onclick="changeRole('${u.id}','staff')" class="ml-2 bg-rose-50 border border-rose-100 text-rose-500 px-3 py-1.5 rounded-lg font-black text-[10px] shadow-sm">降级</button>`;
+                    return `
+                    <tr class="text-sm border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                        <td class="p-4 md:p-6">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-indigo-50 flex items-center justify-center font-black text-indigo-400 text-[10px]">${u.username.charAt(0).toUpperCase()}</div>
+                                <div class="min-w-0">
+                                    <div class="font-black text-slate-700 truncate text-xs md:text-sm">${u.username} ${self?'<span class="text-[9px] text-indigo-400">(本人)</span>':''}</div>
+                                    <div class="md:hidden text-[9px] font-bold text-slate-300 uppercase tracking-widest">${u.role}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="hidden md:table-cell p-6 uppercase font-bold text-slate-300 text-[10px] tracking-widest">${u.role}</td>
+                        <td class="p-4 md:p-6 text-slate-400 font-mono text-[10px]">${u.phone||'-'}</td>
+                        <td class="p-4 md:p-6 text-right whitespace-nowrap">${btns}</td>
+                    </tr>`;
                 }).join(''); lucide.createIcons();
             } catch(e) {}
         }

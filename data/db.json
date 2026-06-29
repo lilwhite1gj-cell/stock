@@ -176,6 +176,22 @@
       "image": null,
       "createdBy": "1",
       "creatorName": "admin"
+    },
+    {
+      "name": "恺子的样品",
+      "category": "样品",
+      "unitPrice": 0,
+      "currency": "CNY",
+      "factoryId": "",
+      "packaging": "",
+      "sku": "",
+      "spec": "1*1",
+      "material": "pvc",
+      "customerName": "通用",
+      "id": "1782726249656",
+      "image": "/uploads/1782726249607.jpg",
+      "createdBy": "1",
+      "creatorName": "admin"
     }
   ],
   "transactions": [
@@ -304,6 +320,19 @@
       "userId": "1",
       "username": "admin",
       "date": "2026-06-29T09:34:08.730Z",
+      "image": null
+    },
+    {
+      "productId": "1782726249656",
+      "type": "in",
+      "quantity": 10,
+      "orderNo": "",
+      "logisticsNo": "",
+      "notes": "",
+      "id": "1782726249673",
+      "userId": "1",
+      "username": "admin",
+      "date": "2026-06-29T09:44:09.673Z",
       "image": null
     }
   ],
