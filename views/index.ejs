@@ -257,9 +257,15 @@
                     document.getElementById('page-login').classList.add('hidden');
                     document.getElementById('app-content').classList.remove('hidden');
                     document.getElementById('sidebar').classList.remove('-translate-x-full');
-                    document.getElementById('roleDisplay').innerText = currentUser.role === 'admin' ? 'SYSTEM ADMIN' : 'SALES SPECIALIST';
+                    
+                    const role = currentUser.role || 'staff';
+                    const roleMap = { 'admin': '最高管理员', 'manager': '部门主管', 'staff': '业务专员' };
+                    document.getElementById('roleDisplay').innerText = roleMap[role] || role.toUpperCase();
+                    
                     document.getElementById('settingNewUsername').value = currentUser.username;
-                    if (currentUser.role === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+                    if (role === 'admin' || role === 'manager') {
+                        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+                    }
                     fetchCategories(); fetchFactories(); fetchCustomers(); showPage('dashboard');
                 } else {
                     document.getElementById('page-login').classList.remove('hidden');
@@ -344,7 +350,7 @@
                     { t: '本月累计入库', v: performance.totalIn, c: 'text-emerald-600', i: 'download' }, 
                     { t: '总业务流转', v: performance.transCount, c: 'text-indigo-600', i: 'activity' }, 
                     { t: '实时款式总数', v: performance.activeSkus, c: 'text-amber-600', i: 'layers' }
-                ].map(c => `<div class="glass-card p-6 flex items-start justify-between"><div class="space-y-2"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${c.t}</p><p class="text-3xl font-black ${c.c}">${c.v}</p></div><div class="${c.c.replace('text-', 'bg-')}/10 p-3 rounded-2xl"><i data-lucide="${c.i}" class="w-5 h-5 ${c.c}"></i></div></div>`).join('');
+                ].map(c => `<div class="glass-card p-4 md:p-6 flex items-start justify-between"><div class="space-y-1 md:space-y-2"><p class="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">${c.t}</p><p class="text-xl md:text-3xl font-black ${c.c}">${c.v}</p></div><div class="${c.c.replace('text-', 'bg-')}/10 p-2 md:p-3 rounded-xl md:rounded-2xl"><i data-lucide="${c.i}" class="w-4 h-4 md:w-5 md:h-5 ${c.c}"></i></div></div>`).join('');
                 
                 const labels = productMix.map(p => p.name), qtyD = productMix.map(p => p.balance), valD = productMix.map(p => { const pr = products.find(prod => prod.name === p.name); return (p.balance * (pr?.unitPrice || 0)).toFixed(2); });
                 const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#0ea5e9'];
@@ -394,19 +400,25 @@
 
                 document.getElementById('invMobile').innerHTML = filtered.map(p => {
                     const isAdmin = currentUser.role === 'admin';
-                    const actBtns = isAdmin ? `<div class="grid grid-cols-2 gap-3 mt-4"><button onclick="event.stopPropagation(); openEditModal('${p.id}')" class="bg-indigo-50 text-indigo-600 py-3.5 rounded-[18px] text-[11px] font-black flex items-center justify-center border border-indigo-100 active:scale-95 transition-all"><i data-lucide="edit-3" class="w-3.5 h-3.5 mr-2"></i>修改档案</button><button onclick="event.stopPropagation(); doDeleteProduct('${p.id}')" class="bg-rose-50 text-rose-600 py-3.5 rounded-[18px] text-[11px] font-black flex items-center justify-center border border-rose-100 active:scale-95 transition-all"><i data-lucide="trash-2" class="w-3.5 h-3.5 mr-2"></i>彻底删除</button></div>` : '';
+                    const actBtns = isAdmin ? `<div class="grid grid-cols-2 gap-3 mt-4 md:mt-6"><button onclick="event.stopPropagation(); openEditModal('${p.id}')" class="bg-indigo-50 text-indigo-600 py-3 md:py-4 rounded-[18px] text-[11px] md:text-xs font-black flex items-center justify-center border border-indigo-100 active:scale-95 transition-all"><i data-lucide="edit-3" class="w-3.5 h-3.5 mr-2"></i>修改</button><button onclick="event.stopPropagation(); doDeleteProduct('${p.id}')" class="bg-rose-50 text-rose-600 py-3 md:py-4 rounded-[18px] text-[11px] md:text-xs font-black flex items-center justify-center border border-rose-100 active:scale-95 transition-all"><i data-lucide="trash-2" class="w-3.5 h-3.5 mr-2"></i>删除</button></div>` : '';
                     return `
-                    <div class="glass-card p-6 space-y-4 clickable-row active:bg-slate-50 transition-all animate-in slide-in-from-right-4" onclick="showInvDetail('${p.id}')">
-                        <div class="flex items-start space-x-4">
-                            <div class="flex-shrink-0">${p.image ? `<img src="${p.image}" onclick="event.stopPropagation(); previewImg('${p.image}')" class="w-20 h-20 object-cover rounded-[20px] shadow-lg cursor-zoom-in">` : '<div class="w-20 h-20 bg-slate-50 rounded-[20px] border border-dashed flex items-center justify-center text-[10px] text-slate-300">无图</div>'}</div>
+                    <div class="glass-card p-5 md:p-8 space-y-4 clickable-row active:bg-slate-50 transition-all animate-in slide-in-from-right-4" onclick="showInvDetail('${p.id}')">
+                        <div class="flex items-start space-x-4 md:space-x-6">
+                            <div class="flex-shrink-0">${p.image ? `<img src="${p.image}" onclick="event.stopPropagation(); previewImg('${p.image}')" class="w-16 h-16 md:w-24 md:h-24 object-cover rounded-[20px] md:rounded-[28px] shadow-lg cursor-zoom-in">` : '<div class="w-16 h-16 md:w-24 md:h-24 bg-slate-50 rounded-[20px] md:rounded-[28px] border border-dashed flex items-center justify-center text-[9px] md:text-[10px] text-slate-300">无图</div>'}</div>
                             <div class="flex-1 min-w-0">
-                                <h4 class="font-black text-xl text-slate-900 tracking-tighter truncate">${p.name}</h4>
-                                <div class="flex flex-wrap gap-1.5 mt-2"><span class="px-2 py-0.5 bg-indigo-50 text-indigo-500 rounded-md text-[9px] font-black uppercase tracking-tighter">${p.category || '默认'}</span><span class="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-md text-[9px] font-black tracking-tighter truncate max-w-[80px]">${p.customerName || '通用'}</span></div>
-                                <p class="text-[10px] text-slate-300 font-mono mt-2 tracking-widest">${p.sku}</p>
+                                <h4 class="font-black text-lg md:text-2xl text-slate-900 tracking-tighter truncate md:whitespace-normal">${p.name}</h4>
+                                <div class="flex flex-wrap gap-1 md:gap-2 mt-1.5 md:mt-2">
+                                    <span class="px-2 py-0.5 bg-indigo-50 text-indigo-500 rounded-md text-[9px] md:text-[10px] font-black uppercase tracking-tighter">${p.category || '默认'}</span>
+                                    <span class="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-md text-[9px] md:text-[10px] font-black tracking-tighter truncate max-w-[100px]">${p.customerName || '通用'}</span>
+                                </div>
+                                <p class="text-[9px] md:text-[10px] text-slate-300 font-mono mt-1.5 md:mt-2 tracking-widest">${p.sku}</p>
                             </div>
-                            <div class="text-right flex-shrink-0"><p class="text-2xl font-black text-emerald-600 tracking-tighter">¥${(p.balance * (p.unitPrice||0)).toFixed(2)}</p><p class="text-[10px] font-black text-indigo-400 bg-indigo-50/50 px-2 py-0.5 rounded-full inline-block mt-1">存量: ${p.balance}</p></div>
+                            <div class="text-right flex-shrink-0">
+                                <p class="text-xl md:text-3xl font-black text-emerald-600 tracking-tighter">¥${(p.balance * (p.unitPrice||0)).toFixed(2)}</p>
+                                <p class="text-[9px] md:text-[10px] font-black text-indigo-400 bg-indigo-50/50 px-2 py-0.5 rounded-full inline-block mt-1">存量: ${p.balance}</p>
+                            </div>
                         </div>
-                        ${p.notes ? `<div class="bg-amber-50/60 p-4 rounded-[20px] border border-amber-100 text-[11px] font-bold text-amber-800 leading-relaxed truncate">备注: ${p.notes}</div>` : ''}
+                        ${p.notes ? `<div class="bg-amber-50/60 p-4 rounded-[20px] border border-amber-100 text-[10px] md:text-[11px] font-bold text-amber-800 leading-relaxed truncate md:whitespace-normal">备注: ${p.notes}</div>` : ''}
                         ${actBtns}
                     </div>`;
                 }).join('');
@@ -421,31 +433,34 @@
                 if (sField === 'quantity') sorted.sort((a,b) => b.quantity - a.quantity);
                 document.getElementById('transList').innerHTML = sorted.map(t => {
                     const p = products.find(prod => prod.id === t.productId), isIn = t.type === 'in', isAdmin = currentUser.role === 'admin';
-                    const custInfo = p?.customerName ? `<span class="px-2 py-0.5 rounded-md text-[9px] font-black bg-slate-100 text-slate-400 border border-slate-200 ml-2 align-middle">${p.customerName}</span>` : '', catTag = p?.category ? `<span class="px-2 py-0.5 rounded-md text-[9px] font-black bg-indigo-50 text-indigo-600 border border-indigo-100 ml-2 align-middle uppercase">${p.category}</span>` : '';
+                    const custInfo = p?.customerName ? `<span class="px-2 py-0.5 rounded-md text-[9px] font-black bg-slate-100 text-slate-400 border border-slate-200 ml-1.5 align-middle">${p.customerName}</span>` : '', catTag = p?.category ? `<span class="px-2 py-0.5 rounded-md text-[9px] font-black bg-indigo-50 text-indigo-600 border border-indigo-100 ml-1.5 align-middle uppercase">${p.category}</span>` : '';
                     return `
-                    <div class="glass-card p-6 md:p-8 border-l-[8px] ${isIn ? 'border-emerald-500' : 'border-rose-500'} transition-all hover:shadow-2xl clickable-row active:bg-slate-50 group animate-in fade-in slide-in-from-bottom-4" onclick="showTransDetail('${t.id}')">
-                        <div class="flex justify-between mb-6">
-                            <span class="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">${new Date(t.date).toLocaleString()}</span>
-                            <div class="flex items-center space-x-3">
-                                ${isAdmin ? `<button onclick="event.stopPropagation(); doDeleteTrans('${t.id}')" class="p-2 text-slate-200 hover:text-rose-500 active:scale-75 transition-all"><i data-lucide="trash-2" class="w-5 h-5"></i></button>` : ''}
-                                <span class="px-4 py-1.5 rounded-full text-[10px] font-black ${isIn ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'} uppercase tracking-widest">${isIn ? 'Inbound' : 'Outbound'}</span>
+                    <div class="glass-card p-5 md:p-8 border-l-[6px] md:border-l-[8px] ${isIn ? 'border-emerald-500' : 'border-rose-500'} transition-all hover:shadow-2xl clickable-row active:bg-slate-50 group animate-in fade-in slide-in-from-bottom-4" onclick="showTransDetail('${t.id}')">
+                        <div class="flex justify-between mb-4 md:mb-6">
+                            <span class="text-[9px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest md:tracking-[0.2em]">${new Date(t.date).toLocaleString()}</span>
+                            <div class="flex items-center space-x-2 md:space-x-3">
+                                ${isAdmin ? `<button onclick="event.stopPropagation(); doDeleteTrans('${t.id}')" class="p-1.5 md:p-2 text-slate-200 hover:text-rose-500 active:scale-75 transition-all"><i data-lucide="trash-2" class="w-4 h-4 md:w-5 md:h-5"></i></button>` : ''}
+                                <span class="px-2.5 py-1 md:px-4 md:py-1.5 rounded-full text-[9px] md:text-[10px] font-black ${isIn ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'} uppercase tracking-widest">${isIn ? '入库' : '出库'}</span>
                             </div>
                         </div>
-                        <div class="flex items-start space-x-6">
-                            <div class="flex-shrink-0">${t.image ? `<img src="${t.image}" onclick="event.stopPropagation(); previewImg('${t.image}')" class="w-24 h-24 object-cover rounded-[28px] shadow-xl shadow-slate-200 cursor-zoom-in active:scale-110 transition-transform">` : '<div class="w-24 h-24 bg-slate-50 rounded-[28px] border-2 border-dashed flex items-center justify-center text-[10px] text-slate-200">No Image</div>'}</div>
-                            <div class="flex-1">
-                                <h4 class="font-black text-slate-900 text-2xl tracking-tighter mb-4">${(p?p.name:'PRODUCT REMOVED') + catTag + custInfo}</h4>
-                                <div class="flex justify-between items-end">
-                                    <div class="text-[11px] text-slate-400 font-bold space-y-2 uppercase tracking-tighter">
-                                        <div class="flex items-center"><i data-lucide="hash" class="w-3 h-3 mr-2"></i>订单: <span class="text-slate-800 ml-1 font-black">${t.orderNo || '-'}</span></div>
-                                        <div class="flex items-center text-indigo-500"><i data-lucide="truck" class="w-3 h-3 mr-2"></i>物流: <span class="ml-1 font-black">${t.logisticsNo || '-'}</span></div>
-                                        <div class="flex items-center"><i data-lucide="user" class="w-3 h-3 mr-2"></i>经办: <span class="ml-1">${t.username || '-'}</span></div>
+                        <div class="flex items-start space-x-4 md:space-x-6">
+                            <div class="flex-shrink-0">${t.image ? `<img src="${t.image}" onclick="event.stopPropagation(); previewImg('${t.image}')" class="w-16 h-16 md:w-24 md:h-24 object-cover rounded-[20px] md:rounded-[28px] shadow-lg shadow-slate-200 cursor-zoom-in active:scale-110 transition-transform">` : '<div class="w-16 h-16 md:w-24 md:h-24 bg-slate-50 rounded-[20px] md:rounded-[28px] border-2 border-dashed flex items-center justify-center text-[9px] md:text-[10px] text-slate-200">无实拍</div>'}</div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-black text-slate-900 text-lg md:text-2xl tracking-tighter mb-2 md:mb-4 truncate md:whitespace-normal">${(p?p.name:'产品已移除')} ${catTag}${custInfo}</h4>
+                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 sm:gap-0">
+                                    <div class="text-[10px] md:text-[11px] text-slate-400 font-bold space-y-1.5 md:space-y-2 uppercase tracking-tighter">
+                                        <div class="flex items-center"><i data-lucide="hash" class="w-3 h-3 mr-1.5"></i>订单: <span class="text-slate-800 ml-0.5 font-black">${t.orderNo || '-'}</span></div>
+                                        <div class="flex items-center text-indigo-500"><i data-lucide="truck" class="w-3 h-3 mr-1.5"></i>物流: <span class="ml-0.5 font-black">${t.logisticsNo || '-'}</span></div>
+                                        <div class="flex items-center"><i data-lucide="user" class="w-3 h-3 mr-1.5"></i>经办: <span class="ml-0.5 font-black">${t.username || '-'}</span></div>
                                     </div>
-                                    <div class="text-right font-black"><p class="text-3xl text-slate-900 mb-1 tracking-tighter">¥${(t.quantity * (p?.unitPrice||0)).toFixed(2)}</p><p class="${isIn ? 'text-emerald-600' : 'text-rose-600'} text-sm bg-${isIn ? 'emerald' : 'rose'}-50/50 px-3 py-1 rounded-full inline-block uppercase">Qty: ${t.quantity}</p></div>
+                                    <div class="text-left sm:text-right font-black w-full sm:w-auto">
+                                        <p class="text-xl md:text-3xl text-slate-900 mb-0.5 md:mb-1 tracking-tighter">¥${(t.quantity * (p?.unitPrice||0)).toFixed(2)}</p>
+                                        <p class="${isIn ? 'text-emerald-600' : 'text-rose-600'} text-[10px] md:text-sm bg-${isIn ? 'emerald' : 'rose'}-50/50 px-2 py-0.5 md:px-3 md:py-1 rounded-full inline-block uppercase">数量: ${t.quantity}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        ${t.notes ? `<div class="mt-6 p-5 bg-amber-50 border border-amber-100 rounded-[24px] shadow-inner text-xs font-black text-amber-800 flex items-start truncate"><i data-lucide="info" class="w-4 h-4 mr-3 mt-0.5 flex-shrink-0 text-amber-400"></i><div>${t.notes}</div></div>` : ''}
+                        ${t.notes ? `<div class="mt-4 md:mt-6 p-4 md:p-5 bg-amber-50 border border-amber-100 rounded-[20px] md:rounded-[24px] shadow-inner text-[11px] md:text-xs font-black text-amber-800 flex items-start"><i data-lucide="info" class="w-3.5 h-3.5 md:w-4 md:h-4 mr-2 md:mr-3 mt-0.5 flex-shrink-0 text-amber-400"></i><div class="truncate md:whitespace-normal">${t.notes}</div></div>` : ''}
                     </div>`;
                 }).join('');
                 lucide.createIcons();
@@ -457,26 +472,26 @@
             const factory = allFactories.find(f => f.id === p.factoryId);
             document.getElementById('detailTitle').innerText = '产品档案全景追溯';
             document.getElementById('detailContent').innerHTML = `
-                <div class="flex flex-col md:flex-row gap-10 items-start">
-                    <div class="w-full md:w-64 h-64 bg-slate-50 rounded-[40px] overflow-hidden shadow-2xl flex-shrink-0">
-                        ${p.image ? `<img src="${p.image}" onclick="previewImg('${p.image}')" class="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform">` : '<div class="w-full h-full flex items-center justify-center text-slate-300 font-black">NO IMAGE</div>'}
+                <div class="flex flex-col md:flex-row gap-6 md:gap-10 items-start">
+                    <div class="w-full md:w-64 h-48 md:h-64 bg-slate-50 rounded-[32px] md:rounded-[40px] overflow-hidden shadow-xl flex-shrink-0">
+                        ${p.image ? `<img src="${p.image}" onclick="previewImg('${p.image}')" class="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform">` : '<div class="w-full h-full flex items-center justify-center text-slate-300 font-black">无预览图</div>'}
                     </div>
-                    <div class="flex-1 space-y-6 w-full">
-                        <span class="px-4 py-1.5 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-200 inline-block">${p.category || '默认品类'}</span>
-                        <h2 class="text-5xl font-black text-slate-900 tracking-tighter leading-tight">${p.name}</h2>
-                        <div class="grid grid-cols-2 gap-x-6 gap-y-5 pt-4 border-t border-slate-100">
-                            <div><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">货号 SKU</p><p class="text-lg font-black font-mono text-slate-700">${p.sku}</p></div>
-                            <div><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">单价 PRICE</p><p class="text-lg font-black text-emerald-600">¥${(p.unitPrice||0).toFixed(2)}</p></div>
-                            <div><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">包装规格 UNIT</p><p class="text-lg font-black text-slate-700">${p.packaging || '-'}</p></div>
-                            <div><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">实时库存 STOCK</p><p class="text-3xl font-black text-indigo-600 tracking-tighter">${p.balance} <span class="text-sm">包</span></p></div>
+                    <div class="flex-1 space-y-4 md:space-y-6 w-full">
+                        <span class="px-3 py-1 md:px-4 md:py-1.5 bg-indigo-600 text-white rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-200 inline-block">${p.category || '默认品类'}</span>
+                        <h2 class="text-3xl md:text-5xl font-black text-slate-900 tracking-tighter leading-tight">${p.name}</h2>
+                        <div class="grid grid-cols-2 gap-x-4 md:gap-x-6 gap-y-4 md:gap-y-5 pt-4 border-t border-slate-100">
+                            <div><p class="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">货号 SKU</p><p class="text-base md:text-lg font-black font-mono text-slate-700">${p.sku}</p></div>
+                            <div><p class="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">单价 PRICE</p><p class="text-base md:text-lg font-black text-emerald-600">¥${(p.unitPrice||0).toFixed(2)}</p></div>
+                            <div><p class="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">包装规格</p><p class="text-base md:text-lg font-black text-slate-700">${p.packaging || '-'}</p></div>
+                            <div><p class="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">实时库存</p><p class="text-2xl md:text-3xl font-black text-indigo-600 tracking-tighter">${p.balance} <span class="text-xs md:text-sm">包</span></p></div>
                         </div>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-slate-50 p-8 rounded-[36px] border border-slate-100/50 shadow-sm"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-3">合作客户 PARTNER</p><p class="text-xl font-black text-slate-800">${p.customerName || '通用 / 样品库'}</p></div>
-                    <div class="bg-slate-50 p-8 rounded-[36px] border border-slate-100/50 shadow-sm"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-3">代工厂 FACTORY</p><p class="text-xl font-black text-slate-800">${factory?.name || '-'}</p></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div class="bg-slate-50 p-6 md:p-8 rounded-[28px] md:rounded-[36px] border border-slate-100/50 shadow-sm"><p class="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2 md:mb-3">合作客户 PARTNER</p><p class="text-lg md:text-xl font-black text-slate-800">${p.customerName || '通用 / 样品库'}</p></div>
+                    <div class="bg-slate-50 p-6 md:p-8 rounded-[28px] md:rounded-[36px] border border-slate-100/50 shadow-sm"><p class="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2 md:mb-3">代工厂 FACTORY</p><p class="text-lg md:text-xl font-black text-slate-800">${factory?.name || '-'}</p></div>
                 </div>
-                ${p.notes ? `<div class="bg-amber-50 p-10 rounded-[40px] border-4 border-amber-100 shadow-inner"><p class="text-[10px] text-amber-500 font-black uppercase tracking-widest mb-4">档案永久备注 (Master Notes)</p><p class="text-lg font-black text-amber-900 leading-relaxed italic">"${p.notes}"</p></div>` : ''}
+                ${p.notes ? `<div class="bg-amber-50 p-6 md:p-10 rounded-[32px] md:rounded-[40px] border-2 md:border-4 border-amber-100 shadow-inner"><p class="text-[9px] md:text-[10px] text-amber-500 font-black uppercase tracking-widest mb-3 md:mb-4">产品档案备注</p><p class="text-base md:text-lg font-black text-amber-900 leading-relaxed italic">"${p.notes}"</p></div>` : ''}
             `;
             openModal('detailModal');
         }
@@ -487,21 +502,21 @@
                 const p = products.find(prod => prod.id === t.productId), isIn = t.type === 'in';
                 document.getElementById('detailTitle').innerText = '业务记录详细追溯';
                 document.getElementById('detailContent').innerHTML = `
-                    <div class="flex items-center justify-between mb-6 bg-slate-900 p-6 rounded-[32px] text-white shadow-2xl">
-                        <div class="flex items-center"><i data-lucide="clock" class="w-4 h-4 mr-3 text-slate-400"></i><span class="text-xs font-black uppercase tracking-widest">${new Date(t.date).toLocaleString()}</span></div>
-                        <span class="px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest ${isIn ? 'bg-emerald-500' : 'bg-rose-500'}">${isIn ? 'Inventory In' : 'Outbound Order'}</span>
+                    <div class="flex items-center justify-between mb-4 md:mb-6 bg-slate-900 p-4 md:p-6 rounded-[24px] md:rounded-[32px] text-white shadow-2xl">
+                        <div class="flex items-center"><i data-lucide="clock" class="w-3.5 h-3.5 md:w-4 md:h-4 mr-2 md:mr-3 text-slate-400"></i><span class="text-[9px] md:text-xs font-black uppercase tracking-widest">${new Date(t.date).toLocaleString()}</span></div>
+                        <span class="px-3 py-1.5 md:px-5 md:py-2 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest ${isIn ? 'bg-emerald-500' : 'bg-rose-500'}">${isIn ? '入库记录' : '出库订单'}</span>
                     </div>
-                    <h2 class="text-5xl font-black text-slate-900 tracking-tighter mb-8">${p ? p.name : '已删除产品'}</h2>
-                    <div class="grid grid-cols-2 gap-6">
-                        <div class="glass-card p-8 border-b-[8px] ${isIn ? 'border-emerald-500' : 'border-rose-500'}"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">变动数量</p><p class="text-4xl font-black ${isIn ? 'text-emerald-600' : 'text-rose-600'} tracking-tighter">${isIn?'+':'-'}${t.quantity} <span class="text-lg">包</span></p></div>
-                        <div class="glass-card p-8"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">业务经办</p><p class="text-2xl font-black text-slate-700">${t.username || '-'}</p></div>
+                    <h2 class="text-3xl md:text-5xl font-black text-slate-900 tracking-tighter mb-6 md:mb-8 truncate md:whitespace-normal">${p ? p.name : '已删除产品'}</h2>
+                    <div class="grid grid-cols-2 gap-4 md:gap-6">
+                        <div class="glass-card p-6 md:p-8 border-b-[6px] md:border-b-[8px] ${isIn ? 'border-emerald-500' : 'border-rose-500'}"><p class="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 md:mb-2">变动数量</p><p class="text-2xl md:text-4xl font-black ${isIn ? 'text-emerald-600' : 'text-rose-600'} tracking-tighter">${isIn?'+':'-'}${t.quantity} <span class="text-sm md:text-lg">包</span></p></div>
+                        <div class="glass-card p-6 md:p-8"><p class="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 md:mb-2">业务经办</p><p class="text-xl md:text-2xl font-black text-slate-700">${t.username || '-'}</p></div>
                     </div>
-                    <div class="bg-slate-50 p-8 rounded-[40px] border border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-8 shadow-inner">
-                        <div class="space-y-2"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">订单关联号</p><p class="text-xl font-black font-mono text-slate-800">${t.orderNo || '-'}</p></div>
-                        <div class="space-y-2"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">物流追踪单号</p><p class="text-xl font-black font-mono text-indigo-600">${t.logisticsNo || '-'}</p></div>
+                    <div class="bg-slate-50 p-6 md:p-8 rounded-[32px] md:rounded-[40px] border border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 shadow-inner">
+                        <div class="space-y-1 md:space-y-2"><p class="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest">订单关联号</p><p class="text-lg md:text-xl font-black font-mono text-slate-800 truncate">${t.orderNo || '-'}</p></div>
+                        <div class="space-y-1 md:space-y-2"><p class="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest">物流追踪单号</p><p class="text-lg md:text-xl font-black font-mono text-indigo-600 truncate">${t.logisticsNo || '-'}</p></div>
                     </div>
-                    ${t.image ? `<div class="space-y-4"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest px-2">现场实拍留档</p><div class="rounded-[48px] overflow-hidden shadow-2xl border-8 border-white"><img src="${t.image}" onclick="previewImg('${t.image}')" class="w-full h-auto cursor-zoom-in active:scale-105 transition-transform"></div></div>` : ''}
-                    ${t.notes ? `<div class="bg-slate-900 p-10 rounded-[40px] text-white shadow-2xl"><p class="text-[10px] text-slate-500 font-black mb-4 uppercase tracking-widest">业务交代备注</p><p class="text-xl font-black leading-relaxed italic text-indigo-200">"${t.notes}"</p></div>` : ''}
+                    ${t.image ? `<div class="space-y-3 md:space-y-4"><p class="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest px-2">现场实拍留档</p><div class="rounded-[32px] md:rounded-[48px] overflow-hidden shadow-2xl border-4 md:border-8 border-white"><img src="${t.image}" onclick="previewImg('${t.image}')" class="w-full h-auto cursor-zoom-in active:scale-105 transition-transform"></div></div>` : ''}
+                    ${t.notes ? `<div class="bg-slate-900 p-8 md:p-10 rounded-[32px] md:rounded-[40px] text-white shadow-2xl"><p class="text-[9px] md:text-[10px] text-slate-500 font-black mb-3 md:mb-4 uppercase tracking-widest">业务交代备注</p><p class="text-lg md:text-xl font-black leading-relaxed italic text-indigo-200">"${t.notes}"</p></div>` : ''}
                 `;
                 lucide.createIcons();
                 openModal('detailModal');
@@ -561,12 +576,116 @@
         async function addCategory() { const name = document.getElementById('newCatName').value.trim(); if (!name) return; try { await api.post('/categories', { name }); document.getElementById('newCatName').value = ''; await fetchCategories(); } catch (e) {} }
         async function removeCategory(name) { if (confirm(`确认删除?`)) { await api.delete(`/categories/${name}`); await fetchCategories(); } }
         
+        async function fetchUsers() {
+            try {
+                const res = await api.get('/admin/users');
+                const users = res.data;
+                const tableBody = document.getElementById('userListTable');
+                if (!tableBody) return;
+
+                const myRole = currentUser.role;
+                const isSuper = myRole === 'admin';
+
+                tableBody.innerHTML = users.map(u => {
+                    const isSelf = u.id === currentUser.id;
+                    const canReset = isSuper || (myRole === 'manager' && u.role === 'staff');
+                    
+                    const roleBadge = u.role === 'admin' ? '<span class="bg-rose-100 text-rose-600 px-2 py-0.5 rounded text-[10px] font-bold">最高级</span>' : 
+                                      u.role === 'manager' ? '<span class="bg-amber-100 text-amber-600 px-2 py-0.5 rounded text-[10px] font-bold">普通管理员</span>' : 
+                                      '<span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded text-[10px] font-bold">业务员</span>';
+
+                    let roleActions = '';
+                    if (isSuper && !isSelf && u.role !== 'admin') {
+                        if (u.role === 'staff') {
+                            roleActions = `<button onclick="changeUserRole('${u.id}', 'manager')" class="text-indigo-600 hover:underline">授权管理员</button>`;
+                        } else if (u.role === 'manager') {
+                            roleActions = `<button onclick="changeUserRole('${u.id}', 'staff')" class="text-slate-500 hover:underline">降级为业务员</button>`;
+                        }
+                    }
+
+                    return `
+                    <tr class="text-xs">
+                        <td class="p-4 font-black text-slate-700">${u.username} ${isSelf ? '<span class="text-indigo-400 ml-1">(本人)</span>' : ''}</td>
+                        <td class="p-4">${roleBadge}</td>
+                        <td class="p-4 text-slate-400 font-mono">${u.phone || '-'}</td>
+                        <td class="p-4 space-x-3 text-right">
+                            ${roleActions}
+                            ${canReset ? `<button onclick="resetUserPassword('${u.id}', '${u.username}')" class="text-indigo-600 font-bold hover:underline">重置密码</button>` : ''}
+                            ${(isSuper && !isSelf && u.role !== 'admin') ? `<button onclick="deleteUser('${u.id}')" class="text-rose-500 font-bold hover:underline">删除</button>` : ''}
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch (e) {
+                toast('❌ 无法加载用户列表', 'bg-red-500');
+            }
+        }
+
+        async function changeUserRole(userId, newRole) {
+            if (!confirm(`确定要更改该用户的权限级别吗？`)) return;
+            try {
+                await api.post('/admin/change-role', { userId, newRole });
+                toast('✅ 权限级别已更新', 'bg-emerald-500');
+                fetchUsers();
+            } catch (e) {
+                toast('❌ 操作失败: ' + (e.response?.data?.message || ''), 'bg-red-500');
+            }
+        }
+
+        async function resetUserPassword(userId, name) {
+            const newPass = prompt(`请输入用户 [${name}] 的新密码 (不少于6位):`);
+            if (!newPass) return;
+            if (newPass.length < 6) return toast('⚠️ 密码长度不足', 'bg-amber-500');
+            try {
+                await api.post('/admin/reset-user-password', { userId, newPassword: newPass });
+                toast('✅ 密码重置成功', 'bg-emerald-500');
+            } catch (e) {
+                toast('❌ 失败: ' + (e.response?.data?.message || ''), 'bg-red-500');
+            }
+        }
+
+        async function deleteUser(id) {
+            if (!confirm('危险操作：确定要删除该账号吗？此操作不可撤销。')) return;
+            try {
+                await api.delete(`/admin/users/${id}`);
+                toast('✅ 账号已彻底移除', 'bg-emerald-500');
+                fetchUsers();
+            } catch (e) {
+                toast('❌ 删除失败', 'bg-red-500');
+            }
+        }
+
         async function login() { const btn = document.getElementById('btnLogin'); btn.disabled=true; btn.innerText='SIGNING IN...'; try { const res = await api.post('/login', { username: username.value, password: password.value }); localStorage.setItem('token', res.data.token); localStorage.setItem('user', JSON.stringify(res.data.user)); location.reload(); } catch (e) { toast('❌ CREDENTIALS INVALID', 'bg-red-600'); btn.disabled=false; btn.innerText='LOG IN'; } }
         async function register() { const data = { username: username.value, password: password.value, phone: regPhone.value, question: regQuestion.value, answer: regAnswer.value }; try { await api.post('/register', data); toast('✅ ACCOUNT CREATED', 'bg-emerald-500'); setTimeout(()=>toggleAuth(false), 1500); } catch (e) { toast('❌ '+ (e.response?.data?.message || 'ERROR'), 'bg-red-600'); } }
         async function verifyUserForForgot() { try { const res = await api.get('/forgot-password-verify', { params: { username: username.value } }); document.getElementById('displayQuestion').innerText = 'SECRET QUESTION: ' + res.data.question; document.getElementById('forgotStep1').classList.add('hidden'); document.getElementById('forgotStep2').classList.remove('hidden'); } catch (e) { toast('❌ USER NOT FOUND', 'bg-red-600'); } }
-        // ... (remaining scripts: resetPasswordNow, updateProfile, etc. updated with improved toast and logic)
-        async function resetPasswordNow() { try { await api.post('/reset-password-now', { username: username.value, phone: forgotPhone.value, answer: forgotAnswer.value, newPassword: forgotNewPass.value }); toast('✅ PASSWORD RESET SUCCESS', 'bg-emerald-600'); setTimeout(()=>location.reload(), 1500); } catch (e) { toast('❌ VERIFICATION FAILED', 'bg-red-600'); } }
-        async function updateProfile(isUserOnly) { const payload = isUserOnly ? { newUsername: document.getElementById('settingNewUsername').value } : { oldPassword: oldPass.value, newPassword: newPass.value }; try { await api.post('/update-profile', payload); toast('✅ PROFILE UPDATED', 'bg-emerald-600'); if (isUserOnly) setTimeout(() => location.reload(), 1000); else { oldPass.value = ''; newPass.value = ''; } } catch (e) { toast('❌ UPDATE FAILED', 'bg-red-600'); } }
+        async function resetPasswordNow() { 
+            try { 
+                await api.post('/reset-password-now', { 
+                    username: username.value, 
+                    phone: forgotPhone.value, 
+                    answer: forgotAnswer.value, 
+                    newPassword: forgotNewPass.value 
+                }); 
+                toast('✅ 密码重置成功，请登录', 'bg-emerald-600'); 
+                setTimeout(()=>location.reload(), 1500); 
+            } catch (e) { 
+                toast('❌ 验证失败：信息不匹配', 'bg-red-600'); 
+            } 
+        }
+        async function updateProfile(isUserOnly) { 
+            const payload = isUserOnly ? { newUsername: document.getElementById('settingNewUsername').value } : { oldPassword: oldPass.value, newPassword: newPass.value }; 
+            try { 
+                const res = await api.post('/update-profile', payload); 
+                toast('✅ 个人资料已更新', 'bg-emerald-600'); 
+                if (isUserOnly) {
+                    localStorage.setItem('user', JSON.stringify(res.data.user));
+                    setTimeout(() => location.reload(), 1000); 
+                } else { 
+                    oldPass.value = ''; newPass.value = ''; 
+                } 
+            } catch (e) { 
+                toast('❌ 更新失败：' + (e.response?.data?.message || '网络异常'), 'bg-red-600'); 
+            } 
+        }
         function toggleAuth(r) { document.getElementById('authTitle').innerText = r ? 'REGISTER' : 'WELCOME'; document.getElementById('loginGroup').classList.toggle('hidden', r); document.getElementById('regGroup').classList.toggle('hidden', !r); document.getElementById('forgotGroup').classList.add('hidden'); }
         function showForgotPassword() { document.getElementById('authTitle').innerText = 'RESET'; document.getElementById('loginGroup').classList.add('hidden'); document.getElementById('regGroup').classList.add('hidden'); document.getElementById('forgotGroup').classList.remove('hidden'); document.getElementById('forgotStep1').classList.remove('hidden'); document.getElementById('forgotStep2').classList.add('hidden'); }
         async function downloadBackup() { const r = await api.get('/backup', { responseType: 'blob' }); const url = window.URL.createObjectURL(new Blob([r.data])); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `BACKUP_${new Date().toLocaleDateString()}.json`); link.click(); }

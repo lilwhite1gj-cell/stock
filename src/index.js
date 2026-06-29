@@ -25,6 +25,7 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '../views'));
 app.get('/', (req, res) => res.render('index'));
 
 const SECRET = process.env.JWT_SECRET || 'mouth-nasal-tape-secret';
@@ -124,46 +125,67 @@ app.post('/api/update-profile', authenticate, async (req, res) => {
 app.get('/api/admin/users', authenticate, async (req, res) => {
   try {
     const role = (req.user.role || '').toLowerCase();
-    console.log(`[Admin API] Request from user: ${req.user.username}, Role: ${role}`);
-    
-    if (role !== 'admin') {
-      console.warn(`[Admin API] Access DENIED for user: ${req.user.username}`);
+    if (role !== 'admin' && role !== 'manager') {
       return res.status(403).json({ message: '需要管理员权限' });
     }
 
     const db = await getDb();
-    if (!db.data || !db.data.users) {
-      return res.status(500).json({ message: '数据库用户表缺失' });
-    }
-
     const users = db.data.users.map(({ password, ...u }) => u);
     res.json(users);
   } catch (err) {
-    console.error(`[Admin API] Internal Error:`, err);
     res.status(500).json({ message: '服务器内部错误' });
   }
 });
 
+app.post('/api/admin/change-role', authenticate, async (req, res) => {
+  const myRole = (req.user.role || '').toLowerCase();
+  if (myRole !== 'admin') return res.status(403).json({ message: '只有最高管理员可以调整角色' });
+  
+  const { userId, newRole } = req.body;
+  if (!['manager', 'staff'].includes(newRole)) return res.status(400).json({ message: '无效的角色类型' });
+  
+  const db = await getDb();
+  const targetUser = db.data.users.find(u => u.id === userId);
+  if (!targetUser) return res.status(404).json({ message: '用户不存在' });
+  if (targetUser.role === 'admin') return res.status(403).json({ message: '最高管理员权限不可被修改' });
+
+  targetUser.role = newRole;
+  await db.write();
+  res.json({ message: `用户 ${targetUser.username} 的权限已调整为 ${newRole}` });
+});
+
 app.post('/api/admin/reset-user-password', authenticate, async (req, res) => {
-  const role = (req.user.role || '').toLowerCase();
-  if (role !== 'admin') return res.status(403).json({ message: '无权限' });
+  const myRole = (req.user.role || '').toLowerCase();
+  if (myRole !== 'admin' && myRole !== 'manager') return res.status(403).json({ message: '无权限' });
+  
   const { userId, newPassword } = req.body;
   const db = await getDb();
-  const user = db.data.users.find(u => u.id === userId);
-  if (!user) return res.status(404).json({ message: '用户不存在' });
+  const targetUser = db.data.users.find(u => u.id === userId);
+  if (!targetUser) return res.status(404).json({ message: '用户不存在' });
+
+  // 权限校验：普通管理员不能重置 admin 或 manager
+  if (myRole === 'manager' && (targetUser.role === 'admin' || targetUser.role === 'manager')) {
+    return res.status(403).json({ message: '普通管理员无权修改高级别账号密码' });
+  }
   
-  user.password = await bcrypt.hash(newPassword, 10);
+  targetUser.password = await bcrypt.hash(newPassword, 10);
   await db.write();
-  res.json({ message: `用户 ${user.username} 的密码已重置` });
+  res.json({ message: `用户 ${targetUser.username} 的密码已重置` });
 });
 
 app.delete('/api/admin/users/:id', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ message: '无权限' });
+  const myRole = (req.user.role || '').toLowerCase();
+  if (myRole !== 'admin') return res.status(403).json({ message: '只有最高管理员可以删除用户' });
+  
   const db = await getDb();
+  const targetUser = db.data.users.find(u => u.id === req.params.id);
+  if (!targetUser) return res.status(404).json({ message: '用户不存在' });
+  if (targetUser.role === 'admin') return res.status(403).json({ message: '无法删除最高管理员' });
   if (req.params.id === req.user.id) return res.status(400).json({ message: '不能删除自己' });
+
   db.data.users = db.data.users.filter(u => u.id !== req.params.id);
   await db.write();
-  res.json({ message: 'User deleted' });
+  res.json({ message: '用户已删除' });
 });
 
 // --- Products ---
@@ -194,7 +216,8 @@ app.post('/api/products', authenticate, upload.single('image'), async (req, res)
 });
 
 app.put('/api/products/:id', authenticate, upload.single('image'), async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ message: '无权限' });
+  const role = (req.user.role || '').toLowerCase();
+  if (role !== 'admin' && role !== 'manager') return res.status(403).json({ message: '无权限' });
   const db = await getDb();
   const product = db.data.products.find(p => p.id === req.params.id);
   if (!product) return res.status(404).json({ message: '未找到' });
@@ -217,7 +240,8 @@ app.put('/api/products/:id', authenticate, upload.single('image'), async (req, r
 });
 
 app.delete('/api/products/:id', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ message: '无权限' });
+  const role = (req.user.role || '').toLowerCase();
+  if (role !== 'admin' && role !== 'manager') return res.status(403).json({ message: '无权限' });
   const db = await getDb();
   if (db.data.transactions.some(t => t.productId === req.params.id)) return res.status(400).json({ message: '该产品已有流水，请先删除流水' });
   db.data.products = db.data.products.filter(p => p.id !== req.params.id);
@@ -228,8 +252,9 @@ app.delete('/api/products/:id', authenticate, async (req, res) => {
 // --- Transactions ---
 app.get('/api/transactions', authenticate, async (req, res) => {
   const db = await getDb();
+  const role = (req.user.role || '').toLowerCase();
   let results = db.data.transactions;
-  if (req.user.role !== 'admin') {
+  if (role !== 'admin' && role !== 'manager') {
     // 权限穿透：包含“样品”字样的品类，全员可见
     const sampleProductIds = db.data.products.filter(p => p.category && p.category.includes('样品')).map(p => p.id);
     results = results.filter(t => t.userId === req.user.id || sampleProductIds.includes(t.productId));
@@ -240,10 +265,11 @@ app.get('/api/transactions', authenticate, async (req, res) => {
 // --- Common Data ---
 app.get('/api/inventory', authenticate, async (req, res) => {
   const db = await getDb();
+  const role = (req.user.role || '').toLowerCase();
   const inventory = db.data.products.map(p => {
     const pTrans = db.data.transactions.filter(t => t.productId === p.id);
     const isSample = p.category && p.category.includes('样品');
-    const relTrans = (req.user.role === 'admin' || isSample) ? pTrans : pTrans.filter(t => t.userId === req.user.id);
+    const relTrans = (role === 'admin' || role === 'manager' || isSample) ? pTrans : pTrans.filter(t => t.userId === req.user.id);
     const balance = relTrans.reduce((acc, t) => t.type === 'in' ? acc + t.quantity : acc - t.quantity, 0);
     return { ...p, balance };
   });
@@ -274,25 +300,12 @@ app.post('/api/transactions', authenticate, upload.single('transImage'), async (
 });
 
 app.delete('/api/transactions/:id', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ message: '无权限' });
+  const role = (req.user.role || '').toLowerCase();
+  if (role !== 'admin' && role !== 'manager') return res.status(403).json({ message: '无权限' });
   const db = await getDb();
   db.data.transactions = db.data.transactions.filter(t => t.id !== req.params.id);
   await db.write();
   res.json({ message: 'Deleted' });
-});
-
-// --- Common Data ---
-app.get('/api/inventory', authenticate, async (req, res) => {
-  const db = await getDb();
-  const inventory = db.data.products.map(p => {
-    const pTrans = db.data.transactions.filter(t => t.productId === p.id);
-    const isSample = p.category === '样品';
-    // 管理员或“样品”品类，计算所有人的流水；普通员工非样品，仅计算自己的流水
-    const relTrans = (req.user.role === 'admin' || isSample) ? pTrans : pTrans.filter(t => t.userId === req.user.id);
-    const balance = relTrans.reduce((acc, t) => t.type === 'in' ? acc + t.quantity : acc - t.quantity, 0);
-    return { ...p, balance };
-  });
-  res.json(inventory);
 });
 
 app.get('/api/categories', authenticate, async (req, res) => {
@@ -301,7 +314,8 @@ app.get('/api/categories', authenticate, async (req, res) => {
 });
 
 app.post('/api/categories', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ message: 'No Permission' });
+  const role = (req.user.role || '').toLowerCase();
+  if (role !== 'admin' && role !== 'manager') return res.status(403).json({ message: 'No Permission' });
   const db = await getDb();
   db.data.categories = db.data.categories || [];
   if (!db.data.categories.includes(req.body.name)) db.data.categories.push(req.body.name);
@@ -310,7 +324,8 @@ app.post('/api/categories', authenticate, async (req, res) => {
 });
 
 app.delete('/api/categories/:name', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ message: 'No Permission' });
+  const role = (req.user.role || '').toLowerCase();
+  if (role !== 'admin' && role !== 'manager') return res.status(403).json({ message: 'No Permission' });
   const db = await getDb();
   db.data.categories = (db.data.categories || []).filter(c => c !== req.params.name);
   await db.write();
@@ -319,28 +334,30 @@ app.delete('/api/categories/:name', authenticate, async (req, res) => {
 
 app.get('/api/dashboard-stats', authenticate, async (req, res) => {
   const db = await getDb();
-  const isAlt = req.user.role !== 'admin';
+  const role = (req.user.role || '').toLowerCase();
+  const isStaff = role === 'staff';
   const sampleProductIds = db.data.products.filter(p => p.category && p.category.includes('样品')).map(p => p.id);
   
-  const myTrans = isAlt ? db.data.transactions.filter(t => t.userId === req.user.id || sampleProductIds.includes(t.productId)) : db.data.transactions;
+  const myTrans = isStaff ? db.data.transactions.filter(t => t.userId === req.user.id || sampleProductIds.includes(t.productId)) : db.data.transactions;
   
   const productMix = db.data.products.map(p => {
     const pt = db.data.transactions.filter(t => t.productId === p.id);
     const isSample = p.category && p.category.includes('样品');
-    const rt = (req.user.role === 'admin' || isSample) ? pt : pt.filter(t => t.userId === req.user.id);
+    const rt = (role === 'admin' || role === 'manager' || isSample) ? pt : pt.filter(t => t.userId === req.user.id);
     const bal = rt.reduce((a, b) => b.type === 'in' ? a + b.quantity : a - b.quantity, 0);
     return { name: p.name, balance: Math.max(0, bal), category: p.category };
   }).filter(p => p.balance > 0);
   
   let leaderboard = [];
-  if (!isAlt) {
+  if (!isStaff) {
     leaderboard = db.data.users.map(u => ({ username: u.username, totalOut: db.data.transactions.filter(t => t.userId === u.id && t.type === 'out').reduce((a,b)=>a+b.quantity,0) })).sort((a,b)=>b.totalOut - a.totalOut).slice(0, 5);
   }
   res.json({ productMix, performance: { totalOut: myTrans.filter(t=>t.type==='out').reduce((a,b)=>a+b.quantity,0), totalIn: myTrans.filter(t=>t.type==='in').reduce((a,b)=>a+b.quantity,0), transCount: myTrans.length, activeSkus: productMix.length }, leaderboard });
 });
 
 app.get('/api/backup', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ message: 'No' });
+  const role = (req.user.role || '').toLowerCase();
+  if (role !== 'admin' && role !== 'manager') return res.status(403).json({ message: 'No' });
   res.download(path.join(__dirname, '../data/db.json'), `Backup_${new Date().toISOString().split('T')[0]}.json`);
 });
 
@@ -351,13 +368,13 @@ app.get('/api/factories', authenticate, async (req, res) => {
 });
 
 app.post('/api/factories', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ message: '无权限' });
+  const role = (req.user.role || '').toLowerCase();
+  if (role !== 'admin' && role !== 'manager') return res.status(403).json({ message: '无权限' });
   const { name, address } = req.body;
   const db = await getDb();
   db.data.factories = db.data.factories || [];
   if (db.data.factories.find(f => f.name === name)) return res.status(400).json({ message: '该工厂已存在' });
   
-  // Assign a random color
   const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#0ea5e9'];
   const color = colors[db.data.factories.length % colors.length];
 
@@ -368,7 +385,8 @@ app.post('/api/factories', authenticate, async (req, res) => {
 });
 
 app.delete('/api/factories/:id', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ message: '无权限' });
+  const role = (req.user.role || '').toLowerCase();
+  if (role !== 'admin' && role !== 'manager') return res.status(403).json({ message: '无权限' });
   const db = await getDb();
   db.data.factories = (db.data.factories || []).filter(f => f.id !== req.params.id);
   await db.write();
@@ -382,7 +400,8 @@ app.get('/api/customers', authenticate, async (req, res) => {
 });
 
 app.post('/api/customers', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ message: '无权限' });
+  const role = (req.user.role || '').toLowerCase();
+  if (role !== 'admin' && role !== 'manager') return res.status(403).json({ message: '无权限' });
   const { name, contact, address, phone } = req.body;
   const db = await getDb();
   db.data.customers = db.data.customers || [];
@@ -395,9 +414,10 @@ app.post('/api/customers', authenticate, async (req, res) => {
 });
 
 app.delete('/api/customers/:id', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ message: '无权限' });
+  const role = (req.user.role || '').toLowerCase();
+  if (role !== 'admin' && role !== 'manager') return res.status(403).json({ message: '无权限' });
   const db = await getDb();
-  db.data.customers = (db.data.customers || []).filter(c => c.id !== req.params.id);
+  db.data.customers = (db.data.customers || []).filter(c => c !== req.params.id);
   await db.write();
   res.json({ message: 'Deleted' });
 });
