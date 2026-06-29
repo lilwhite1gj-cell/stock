@@ -42,6 +42,16 @@
         .detail-scroll-fix::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        
+        /* 新增：图片悬停放大特效 */
+        .hover-zoom-trigger { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: zoom-in; position: relative; z-index: 10; }
+        .hover-zoom-trigger:hover { 
+            transform: scale(3.5) translateX(20px); 
+            z-index: 600 !important; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border-color: #6366f1 !important;
+        }
+        
         .error-bubble { color: #e11d48; font-size: 10px; font-weight: 800; margin-top: 4px; animation: shake 0.4s ease; }
         @keyframes shake { 0%,100% {transform:translateX(0)} 25% {transform:translateX(-4px)} 75% {transform:translateX(4px)} }
     </style>
@@ -133,7 +143,7 @@
                         <div class="flex bg-white px-4 py-1 rounded-[22px] border border-slate-100 shadow-sm focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all"><i data-lucide="search" class="m-4 text-slate-300"></i><input type="text" id="invSearch" oninput="renderInventory()" placeholder="搜索产品名称、货号..." class="flex-1 bg-transparent outline-none font-bold text-lg"></div>
                         <div class="flex items-center space-x-3 bg-white px-6 py-4 rounded-[22px] shadow-sm border border-slate-100 self-end md:self-start"><span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sort By:</span><select id="invSortField" onchange="renderInventory()" class="bg-transparent outline-none font-black text-sm text-indigo-600"><option value="id">录入时间</option><option value="name">产品名称</option><option value="customerName">客户维度</option><option value="balance">库存量</option><option value="value">资产价值</option></select></div>
                     </div>
-                    <div class="hidden md:block glass-card overflow-hidden">
+                    <div class="hidden md:block glass-card">
                         <table class="w-full text-left border-collapse table-fixed">
                             <thead class="bg-slate-50/50 border-b border-slate-100">
                                 <tr>
@@ -351,7 +361,7 @@
                     return `<tr class="hover:bg-slate-50 transition-all clickable-row group" onclick="showInvDetail('${p.id}')">
                         <td class="p-8">
                             <div class="flex items-center space-x-4">
-                                <div class="relative w-12 h-12 flex-shrink-0 group-hover:scale-110 transition-transform duration-500">
+                                <div class="relative w-12 h-12 flex-shrink-0 hover-zoom-trigger">
                                     <img src="${p.image || ''}" class="w-full h-full rounded-xl object-cover bg-slate-100 shadow-sm border-2 border-white" onerror="this.src='https://via.placeholder.com/150?text=NO+IMAGE'">
                                 </div>
                                 <div class="min-w-0">
