@@ -172,6 +172,35 @@ app.get('/api/transactions', authenticate, async (req, res) => {
   const sampleIds = db.data.products.filter(p => p.category?.includes('样品')).map(p => p.id);
   res.json(db.data.transactions.filter(t => role !== 'staff' || t.userId === req.user.id || sampleIds.includes(t.productId)));
 });
+app.delete('/api/transactions/:id', authenticate, async (req, res) => {
+  try {
+    const role = (req.user.role || 'staff').toLowerCase();
+    if (role !== 'admin' && role !== 'manager') {
+      return res.status(403).json({ message: '权限不足：仅限管理员撤销流水' });
+    }
+    const db = await getDb();
+    const tid = String(req.params.id);
+    const exists = db.data.transactions.find(t => String(t.id) === tid);
+    if (!exists) return res.status(404).json({ message: '未找到该条流水记录' });
+
+    db.data.transactions = db.data.transactions.filter(t => String(t.id) !== tid);
+    await db.write();
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    console.error('Delete trans error:', err);
+    res.status(500).json({ message: '服务器内部错误，请检查数据库' });
+  }
+});
+
+app.delete('/api/products/:id', authenticate, async (req, res) => {
+  const role = (req.user.role || '').toLowerCase();
+  if (role !== 'admin' && role !== 'manager') return res.status(403).json({ message: 'Only admins can delete products' });
+  const db = await getDb();
+  const hasTrans = db.data.transactions.some(t => t.productId === req.params.id);
+  if (hasTrans) return res.status(400).json({ message: 'Cannot delete product with existing transactions' });
+  db.data.products = db.data.products.filter(p => p.id !== req.params.id);
+  await db.write(); res.json({ message: 'Deleted' });
+});
 
 app.post('/api/transactions', authenticate, upload.single('transImage'), async (req, res) => {
   const db = await getDb();
@@ -220,25 +249,50 @@ app.get('/api/dashboard-stats', authenticate, async (req, res) => {
   res.json({ performance: { totalOut: trans.filter(t=>t.type==='out').reduce((a,b)=>a+b.quantity,0), totalIn: trans.filter(t=>t.type==='in').reduce((a,b)=>a+b.quantity,0), transCount: trans.length, activeSkus: productMix.length }, productMix, leaderboard: lb });
 });
 
+app.get('/api/customers', authenticate, async (req, res) => { 
+  const db = await getDb(); 
+  res.json(db.data.customers || []); 
+});
+app.delete('/api/customers/:id', authenticate, async (req, res) => {
+  const role = (req.user.role || '').toLowerCase();
+  if (role !== 'admin' && role !== 'manager') return res.status(403).json({ message: 'No Permission' });
+  const db = await getDb();
+  db.data.customers = db.data.customers.filter(c => c.id !== req.params.id);
+  await db.write(); res.json({ message: 'Deleted' });
+});
+app.post('/api/customers', authenticate, async (req, res) => {
+  const db = await getDb(); 
+  const c = { ...req.body, id: Date.now().toString(), createdBy: req.user.id };
+  db.data.customers.push(c); await db.write(); res.json(c);
+});
+
 app.get('/api/factories', authenticate, async (req, res) => { const db = await getDb(); res.json(db.data.factories || []); });
+app.delete('/api/factories/:id', authenticate, async (req, res) => {
+  const role = (req.user.role || '').toLowerCase();
+  if (role !== 'admin' && role !== 'manager') return res.status(403).json({ message: 'No Permission' });
+  const db = await getDb();
+  db.data.factories = db.data.factories.filter(f => f.id !== req.params.id);
+  await db.write(); res.json({ message: 'Deleted' });
+});
 app.post('/api/factories', authenticate, async (req, res) => {
   if (req.user.role === 'staff') return res.status(403).json({ message: 'No' });
   const db = await getDb(); const f = { ...req.body, id: Date.now().toString(), color: '#6366f1' };
   db.data.factories.push(f); await db.write(); res.json(f);
 });
 
-app.get('/api/customers', authenticate, async (req, res) => { const db = await getDb(); res.json(db.data.customers || []); });
-app.post('/api/customers', authenticate, async (req, res) => {
-  const db = await getDb(); const c = { ...req.body, id: Date.now().toString() };
-  db.data.customers.push(c); await db.write(); res.json(c);
-});
-
 app.get('/api/categories', authenticate, async (req, res) => { const db = await getDb(); res.json(db.data.categories || ['嘴贴', '鼻贴', '样品']); });
 app.post('/api/categories', authenticate, async (req, res) => {
-  if (req.user.role === 'staff') return res.status(403).json({ message: 'No' });
+  if (req.user.role === 'staff') return res.status(403).json({ message: 'No Permission' });
   const db = await getDb(); db.data.categories = db.data.categories || [];
   if(!db.data.categories.includes(req.body.name)) db.data.categories.push(req.body.name);
   await db.write(); res.json(db.data.categories);
+});
+app.delete('/api/categories/:name', authenticate, async (req, res) => {
+  if (req.user.role === 'staff') return res.status(403).json({ message: 'No Permission' });
+  const db = await getDb();
+  db.data.categories = (db.data.categories || []).filter(c => c !== req.params.name);
+  await db.write();
+  res.json(db.data.categories);
 });
 
 app.listen(5000, '0.0.0.0', () => console.log(`Server fully restored on port 5000`));

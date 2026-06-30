@@ -64,6 +64,9 @@
         /* 确保表格容器不拦截溢出内容 */
         .table-container-fix { overflow: visible !important; }
         
+        /* 移除数字输入框的滚轮调节和箭头，防止滚动冲突 */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
         .error-bubble { color: #e11d48; font-size: 10px; font-weight: 800; margin-top: 4px; animation: shake 0.4s ease; }
         @keyframes shake { 0%,100% {transform:translateX(0)} 25% {transform:translateX(-4px)} 75% {transform:translateX(4px)} }
     </style>
@@ -99,10 +102,9 @@
             <button onclick="toggleSidebar()" class="p-3 bg-slate-50 rounded-xl text-slate-600 active:scale-90 transition-transform"><i data-lucide="menu" class="w-6 h-6"></i></button>
         </header>
 
-        <main id="mainContainer" class="flex-1 overflow-y-auto p-4 md:p-10 space-y-6">
-
+        <main id="mainContainer" class="flex-1 overflow-y-auto p-4 lg:p-10 space-y-6">
             <!-- 登录/注册 -->
-            <div id="page-login" class="min-h-[80vh] flex items-center justify-center">
+            <div id="page-login" class="min-h-[80vh] flex items-center justify-center p-4">
                 <div class="w-full max-w-sm bg-white p-10 rounded-[40px] shadow-2xl border border-indigo-50/50">
                     <div class="text-center mb-10"><div class="w-20 h-20 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-2xl shadow-indigo-200 mx-auto mb-6"><i data-lucide="shield-check" class="text-white w-10 h-10"></i></div><h2 id="authTitle" class="text-3xl font-black text-slate-900 tracking-tighter text-center">欢迎回来</h2></div>
                     <div class="space-y-4" id="loginForm">
@@ -155,16 +157,16 @@
                         <div class="flex bg-white px-4 py-1 rounded-[22px] border border-slate-100 shadow-sm focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all"><i data-lucide="search" class="m-4 text-slate-300"></i><input type="text" id="invSearch" oninput="renderInventory()" placeholder="搜索产品名称、货号..." class="flex-1 bg-transparent outline-none font-bold text-lg"></div>
                         <div class="flex items-center space-x-3 bg-white px-6 py-4 rounded-[22px] shadow-sm border border-slate-100 self-end md:self-start"><span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sort By:</span><select id="invSortField" onchange="renderInventory()" class="bg-transparent outline-none font-black text-sm text-indigo-600"><option value="id">录入时间</option><option value="name">产品名称</option><option value="customerName">客户维度</option><option value="balance">库存量</option><option value="value">资产价值</option></select></div>
                     </div>
-                    <div class="hidden md:block glass-card table-container-fix">
-                        <table class="w-full text-left border-collapse table-fixed">
+                    <div class="hidden md:block glass-card table-container-fix overflow-x-auto">
+                        <table class="w-full text-left border-collapse table-fixed min-w-[1000px]">
                             <thead class="bg-slate-50/50 border-b border-slate-100">
                                 <tr>
-                                    <th class="w-[15%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">产品名称</th>
-                                    <th class="w-[20%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">核心参数 (品类/尺寸/材质)</th>
-                                    <th class="w-[20%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">业务维度 (客户/工厂)</th>
-                                    <th class="w-[20%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">计价/库存</th>
-                                    <th class="w-[15%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">最后经办</th>
-                                    <th class="w-[15%] p-8 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">资产总额</th>
+                                    <th class="w-[18%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">产品名称</th>
+                                    <th class="w-[18%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">核心参数 (品类/尺寸/材质)</th>
+                                    <th class="w-[18%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">业务维度 (客户/工厂)</th>
+                                    <th class="w-[18%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">计价/库存</th>
+                                    <th class="w-[14%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">最后经办</th>
+                                    <th class="w-[14%] p-8 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">资产总额</th>
                                 </tr>
                             </thead>
                             <tbody id="invTable" class="divide-y divide-slate-50"></tbody>
@@ -275,7 +277,7 @@
         <div class="bg-white w-full max-w-xl rounded-none md:rounded-[48px] p-8 md:p-12 shadow-2xl overflow-hidden flex flex-col h-full md:max-h-[90vh] modal-drawer">
             <div class="md:hidden modal-handle"></div>
             <h3 id="prodModalTitle" class="text-3xl font-black mb-8 tracking-tighter text-center">产品档案编辑</h3>
-            <div class="space-y-5 modal-scroll detail-scroll-fix flex-1 pr-2">
+            <div class="space-y-6 modal-scroll detail-scroll-fix flex-1 pr-2 pb-10">
                 <input type="hidden" id="editProdId">
                 <div class="grid grid-cols-2 gap-4"><div><select id="pCat" onchange="updateDynamicHints('p')" class="w-full bg-slate-100 p-5 rounded-[22px] font-black border-0 outline-none"></select></div><div><select id="pFact" class="w-full bg-slate-100 p-5 rounded-[22px] font-black border-0 outline-none"></select></div></div>
                 <input type="text" id="pCust" list="customerDataList" placeholder="所属客户" class="w-full bg-slate-100 p-5 rounded-[22px] font-black border-0 outline-none">
@@ -339,10 +341,13 @@
     </div>
 
     <script>
+        // 全局禁用数字输入框的鼠标滚轮调节功能，防止与页面滚动冲突
+        document.addEventListener('wheel', function(e) { if (document.activeElement.type === 'number') document.activeElement.blur(); });
         const api = axios.create({ baseURL: '/api' });
         api.interceptors.request.use(config => { const token = localStorage.getItem('token'); if (token) config.headers.Authorization = `Bearer ${token}`; return config; });
 
-        let currentUser = JSON.parse(localStorage.getItem('user')), products = [], allCategories = [], allFactories = [], allCustomers = [];
+                let currentUser = null; try { currentUser = JSON.parse(localStorage.getItem("user")); } catch(e) { console.error("User parse error", e); }
+        let products = [], allCategories = [], allFactories = [], allCustomers = [];
         let qtyChart = null, valueChart = null, sampleChart = null;
         let displayCurrency = 'CNY', exchangeRate = 7.25;
 
@@ -376,6 +381,35 @@
             catch (e) { toast('❌ 登录失败：用户名或密码错误', 'bg-red-600'); getEl('btnLogin').disabled = false; getEl('btnLogin').innerText = '登 录'; }
         }
         
+        
+        function showForgotPassword() {
+            getEl('authTitle').innerText = '重置登录密钥';
+            getEl('loginGroup').classList.add('hidden');
+            getEl('regGroup').classList.add('hidden');
+            getEl('forgotGroup').classList.remove('hidden');
+            getEl('forgotStep1').classList.remove('hidden');
+            getEl('forgotStep2').classList.add('hidden');
+        }
+        async function verifyUserForForgot() {
+            const u = getEl('username').value;
+            if(!u) return toast('⚠️ 请先输入用户名', 'bg-amber-500');
+            try {
+                const res = await api.get('/forgot-password-verify', { params: { username: u } });
+                getEl('displayQuestion').innerText = '密保问题: ' + res.data.question;
+                getEl('forgotStep1').classList.add('hidden');
+                getEl('forgotStep2').classList.remove('hidden');
+            } catch(e) { toast('❌ 未找到该用户', 'bg-red-600'); }
+        }
+        async function resetPasswordNow() {
+            const u = getEl('username').value, ph = getEl('forgotPhone').value, a = getEl('forgotAnswer').value, np = getEl('forgotNewPass').value;
+            if(!ph || !a || !np) return toast('⚠️ 请填写完整验证信息', 'bg-amber-500');
+            try {
+                await api.post('/reset-password-now', { username: u, phone: ph, answer: a, newPassword: np });
+                toast('✅ 密码重置成功，请登录', 'bg-emerald-600');
+                toggleAuth(false);
+            } catch(e) { toast('❌ 验证失败：信息不匹配', 'bg-red-600'); }
+        }
+
         function toggleAuth(isReg) { getEl('authTitle').innerText = isReg ? '注册新账号' : '欢迎回来'; getEl('regGroup').classList.toggle('hidden', !isReg); getEl('btnLogin').parentElement.classList.toggle('hidden', isReg); }
         async function register() { const u = getEl('username').value, p = getEl('password').value, ph = getEl('regPhone').value, q = getEl('regQuestion').value, a = getEl('regAnswer').value; if(!u || !p || !ph || !q || !a) return toast('⚠️ 请填写完整注册信息', 'bg-amber-500'); try { await api.post('/register', { username: u, password: p, phone: ph, question: q, answer: a }); toast('✅ 注册成功，欢迎加入', 'bg-emerald-500'); toggleAuth(false); } catch (e) { toast('❌ 注册失败：用户名可能已被占用', 'bg-red-600'); } }
 
@@ -472,6 +506,7 @@
                                 <div class="min-w-0">
                                     <div class="font-black text-sm text-slate-800 truncate">${p.name}</div>
                                     <div class="text-[10px] text-slate-300 font-mono tracking-widest uppercase truncate">${p.sku}</div>
+                                    ${p.notes ? `<div class="text-[9px] text-amber-600 font-black mt-1 truncate max-w-[150px] italic bg-amber-50 px-1 rounded-sm">备注: ${p.notes}</div>` : ''}
                                     ${actBtns}
                                 </div>
                             </div>
@@ -519,46 +554,36 @@
                 const res = await api.get('/transactions'); let sorted = res.data.slice().reverse();
                 if(getEl('transSortField').value==='quantity') sorted.sort((a,b)=>b.quantity-a.quantity);
                 getEl('transList').innerHTML = sorted.map(t => {
-                    const p = products.find(x => x.id === t.productId), isIn = t.type === 'in', isAdmin = currentUser.role === 'admin';
-                    const imgPreview = t.image ? `<img src="${t.image}" class="w-16 h-16 md:w-28 md:h-28 rounded-2xl object-cover shadow-lg border-4 border-white cursor-zoom-in hover:scale-105 transition-transform flex-shrink-0" onclick="event.stopPropagation(); previewImg('${t.image}')">` : `<div class="w-16 h-16 md:w-28 md:h-28 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-300 border-2 border-dashed border-slate-200 flex-shrink-0"><i data-lucide="image" class="w-8 h-8"></i></div>`;
+                    const p = products.find(x => x.id === t.productId), isIn = t.type === 'in';
+                    const isAdmin = currentUser.role === 'admin' || currentUser.role === 'manager';
+                    const imgPreview = t.image ? `<img src="${t.image}" class="w-16 h-16 md:w-28 md:h-28 rounded-2xl object-cover shadow-lg border-2 md:border-4 border-white cursor-zoom-in hover:scale-105 transition-transform flex-shrink-0" onclick="event.stopPropagation(); previewImg('${t.image}')">` : `<div class="w-16 h-16 md:w-28 md:h-28 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-300 border-2 border-dashed border-slate-200 flex-shrink-0"><i data-lucide="image" class="w-8 h-8"></i></div>`;
                     const delBtn = isAdmin ? `<button onclick="event.stopPropagation(); doDeleteTrans('${t.id}')" class="p-3 bg-rose-50 text-rose-400 rounded-xl active:scale-90 transition-all hover:bg-rose-100"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : '';
                     
                     return `
-                    <div class="glass-card p-6 md:p-8 border-l-[12px] ${isIn ? 'border-emerald-500' : 'border-rose-500'} flex flex-col md:flex-row items-center gap-6 animate-in slide-in-from-bottom-4 shadow-sm hover:shadow-md transition-all clickable-row" onclick="showTransDetail('${t.id}')">
-                        <!-- 图片移动到最左边 -->
+                    <div class="glass-card p-5 md:p-8 border-l-[8px] md:border-l-[12px] ${isIn ? 'border-emerald-500' : 'border-rose-500'} flex flex-row items-center gap-4 md:gap-6 animate-in slide-in-from-bottom-4 shadow-sm hover:shadow-md transition-all clickable-row" onclick="showTransDetail('${t.id}')">
+                        <!-- 图片 -->
                         ${imgPreview}
                         
-                        <!-- 中间信息区 -->
-                        <div class="flex-1 min-w-0 w-full">
-                            <div class="flex items-center space-x-3 mb-2">
-                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${isIn ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${isIn ? '入库记录' : '出库记录'}</span>
-                                <span class="text-[10px] font-black text-slate-300 tracking-[0.2em] uppercase">${new Date(t.date).toLocaleString()}</span>
+                        <!-- 信息区 -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-2 mb-1 md:mb-2">
+                                <span class="px-2 py-0.5 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest ${isIn ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${isIn ? '入库' : '出库'}</span>
+                                <span class="text-[8px] md:text-[10px] font-black text-slate-300 tracking-wider md:tracking-[0.2em] uppercase">${new Date(t.date).toLocaleString([], {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'})}</span>
                             </div>
-                            <h4 class="text-2xl font-black truncate text-slate-800 tracking-tighter mb-2">${p ? p.name : '产品已被移除'}</h4>
-                            <div class="flex flex-wrap gap-3 items-center">
-                                <div class="flex items-center space-x-2 px-3 py-1.5 bg-slate-50 rounded-xl border border-slate-100">
-                                    <i data-lucide="user" class="w-3 h-3 text-slate-400"></i>
-                                    <span class="text-xs font-black text-slate-600">${t.username}</span>
-                                </div>
-                                <div class="flex items-center space-x-2 px-3 py-1.5 bg-slate-50 rounded-xl border border-slate-100 font-mono text-xs text-slate-500">
-                                    <i data-lucide="hash" class="w-3 h-3"></i>
-                                    <span>${t.orderNo || '无订单号'}</span>
-                                </div>
+                            <h4 class="text-base md:text-2xl font-black truncate text-slate-800 tracking-tighter mb-1 md:mb-2">${p ? p.name : '已删'}</h4>
+                            ${t.notes ? `<div class="text-[10px] md:text-xs text-slate-500 italic bg-slate-100/50 p-2 rounded-lg border-l-2 border-slate-300 mb-2 mt-1">📝 ${t.notes}</div>` : ''}
+                            <div class="flex flex-wrap gap-1.5 md:gap-3 items-center">
+                                <span class="text-[9px] md:text-xs font-black text-slate-400">${t.username}</span>
+                                <span class="text-[9px] md:font-mono text-slate-300 truncate max-w-[80px] md:max-w-none">${t.orderNo || ''}</span>
                             </div>
                         </div>
 
-                        <!-- 右侧数值区 -->
-                        <div class="flex items-center space-x-8 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-4 md:pt-0 border-slate-100">
-                            <div class="text-right">
-                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">变动数量</p>
-                                <p class="text-3xl font-black ${isIn ? 'text-emerald-600' : 'text-rose-600'} tracking-tighter">${isIn ? '+' : '-'}${t.quantity.toLocaleString()} <span class="text-xs opacity-50">Bags</span></p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">金额流水</p>
-                                <p class="text-4xl font-black text-slate-900 tracking-tighter">${formatMoney(t.quantity * (p?.unitPrice || 0), p?.currency)}</p>
-                            </div>
-                            ${delBtn}
+                        <!-- 数值区 -->
+                        <div class="text-right flex-shrink-0">
+                            <p class="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter mb-1">${formatMoney(t.quantity * (p?.unitPrice || 0), p?.currency)}</p>
+                            <p class="text-xs md:text-base font-black ${isIn ? 'text-emerald-600' : 'text-rose-600'} uppercase tracking-widest">${isIn ? '+' : '-'}${t.quantity} Bags</p>
                         </div>
+                        ${delBtn}
                     </div>`;
                 }).join('');
                 lucide.createIcons();
@@ -793,37 +818,189 @@
         async function fetchUsers() {
             try {
                 const res = await api.get('/admin/users');
-                getEl('userListTable').innerHTML = res.data.map(u => {
+                const list = res.data.map(u => {
                     const isS = currentUser.role === 'admin', self = u.id === currentUser.id;
-                    let btns = `<button onclick="resetUserPassword('${u.id}','${u.username}')" class="bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-slate-600 font-black text-[10px] shadow-sm hover:bg-slate-50">重置密码</button>`;
-                    if(isS && !self && u.role === 'staff') btns += `<button onclick="changeRole('${u.id}','manager')" class="ml-2 bg-emerald-50 border border-emerald-100 text-emerald-600 px-3 py-1.5 rounded-lg font-black text-[10px] shadow-sm">提升</button>`;
-                    if(isS && !self && u.role === 'manager') btns += `<button onclick="changeRole('${u.id}','staff')" class="ml-2 bg-rose-50 border border-rose-100 text-rose-500 px-3 py-1.5 rounded-lg font-black text-[10px] shadow-sm">降级</button>`;
+                    const roleColor = u.role === 'admin' ? 'bg-indigo-100 text-indigo-600' : (u.role === 'manager' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400');
+                    let btns = `<button onclick="resetUserPassword('${u.id}','${u.username}')" class="bg-white border border-slate-200 px-4 py-2 rounded-xl text-slate-600 font-black text-xs shadow-sm hover:bg-slate-50">重置</button>`;
+                    if(isS && !self && u.role !== 'admin') btns += `<button onclick="doDeleteUser('${u.id}','${u.username}')" class="ml-2 bg-rose-50 border border-rose-100 text-rose-500 px-4 py-2 rounded-xl font-black text-xs shadow-sm">删除</button>`;
+                    if(isS && !self && u.role === 'staff') btns += `<button onclick="changeRole('${u.id}','manager')" class="ml-2 bg-emerald-50 border border-emerald-100 text-emerald-600 px-4 py-2 rounded-xl font-black text-xs">提升</button>`;
+                    if(isS && !self && u.role === 'manager') btns += `<button onclick="changeRole('${u.id}','staff')" class="ml-2 bg-rose-50 border border-rose-100 text-rose-500 px-4 py-2 rounded-xl font-black text-xs">撤销</button>`;
+                    
                     return `
-                    <tr class="text-sm border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                        <td class="p-4 md:p-6">
+                    <!-- 移动端卡片 -->
+                    <div class="md:hidden glass-card p-6 space-y-4 mb-4">
+                        <div class="flex justify-between items-start">
                             <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-indigo-50 flex items-center justify-center font-black text-indigo-400 text-[10px]">${u.username.charAt(0).toUpperCase()}</div>
-                                <div class="min-w-0">
-                                    <div class="font-black text-slate-700 truncate text-xs md:text-sm">${u.username} ${self?'<span class="text-[9px] text-indigo-400">(本人)</span>':''}</div>
-                                    <div class="md:hidden text-[9px] font-bold text-slate-300 uppercase tracking-widest">${u.role}</div>
+                                <div class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center font-black text-indigo-500 text-xs">${u.username.charAt(0).toUpperCase()}</div>
+                                <div>
+                                    <div class="font-black text-slate-800 text-sm">${u.username} ${self?'<span class="text-[9px] text-indigo-400 font-black">(本人)</span>':''}</div>
+                                    <div class="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md inline-block ${roleColor} mt-1">${u.role}</div>
                                 </div>
                             </div>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-slate-50">
+                            <div class="text-[11px] font-bold text-slate-400">📱 ${u.phone||'-'}</div>
+                            <div class="flex space-x-1">${btns}</div>
+                        </div>
+                    </div>
+                    <!-- 桌面端行 -->
+                    <tr class="hidden md:table-row text-sm border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                        <td class="p-6">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-400 text-xs">${u.username.charAt(0).toUpperCase()}</div>
+                                <div class="font-black text-slate-700">${u.username} ${self?'(本人)':''}</div>
+                            </div>
                         </td>
-                        <td class="hidden md:table-cell p-6 uppercase font-bold text-slate-300 text-[10px] tracking-widest">${u.role}</td>
-                        <td class="p-4 md:p-6 text-slate-400 font-mono text-[10px]">${u.phone||'-'}</td>
-                        <td class="p-4 md:p-6 text-right whitespace-nowrap">${btns}</td>
+                        <td class="p-6 uppercase font-bold text-slate-300 text-[10px] tracking-widest">${u.role}</td>
+                        <td class="p-6 text-slate-400 font-mono text-xs">${u.phone||'-'}</td>
+                        <td class="p-6 text-right">${btns}</td>
                     </tr>`;
-                }).join(''); lucide.createIcons();
+                }).join('');
+                getEl('userListTable').innerHTML = list;
+                lucide.createIcons();
             } catch(e) {}
+        }
+        
+        async function doDeleteUser(id, name) {
+            if(!confirm(`彻底从系统移除员工 [${name}]？此操作不可撤销且将导致其无法登录。`)) return;
+            try {
+                await api.delete(`/admin/users/${id}`);
+                toast('✅ 账号已从系统中注销', 'bg-emerald-600');
+                fetchUsers();
+            } catch(e) {
+                toast('❌ 操作失败：' + (e.response?.data?.message || '无法删除最高管理员或本人'), 'bg-red-600');
+            }
         }
         async function changeRole(userId, newRole) { if(confirm('确认调整该账户权限？')) { await api.post('/admin/change-role', { userId, newRole }); fetchUsers(); toast('✅ 权限状态已实时同步', 'bg-emerald-500'); } }
         async function resetUserPassword(id, name) { const p = prompt(`正在强制重置 [${name}] 的密码 (不少于6位):`); if(p && p.length>=6) api.post('/admin/reset-user-password', { userId: id, newPassword: p }).then(() => toast('✅ 密码已重置', 'bg-emerald-500')); }
-        async function doDeleteProduct(id) { if(confirm('彻底删除档案？已有流水则无法删除。')) { try { await api.delete(`/products/${id}`); toast('✅ 已移除', 'bg-emerald-500'); renderInventory(); } catch(e) { toast('❌ 无法删除：已有业务流水', 'bg-red-500'); } } }
+        async function doDeleteProduct(id) { if(confirm('彻底删除档案？已有流水则无法删除。')) { try { await api.delete(`/products/${id}`); toast('✅ 已移除', 'bg-emerald-500'); renderInventory(); } catch(e) { toast('❌ 无法删除：已有业务流水记录', 'bg-red-500'); } } }
+        async function doDeleteTrans(id) { 
+            if(confirm('确认彻底撤销该笔流水记录？相关库存将同步调整且无法恢复。')) { 
+                try { 
+                    const res = await api.delete(`/transactions/${id}`); 
+                    toast('✅ 流水已成功撤销，数据已同步', 'bg-emerald-600'); 
+                    renderTrans(); 
+                    renderInventory(); 
+                } catch(e) { 
+                    const msg = e.response?.data?.message || '连接断开(ERR:Net)';
+                    const status = e.response?.status ? ` [Code: ${e.response.status}]` : '';
+                    toast('❌ 撤销失败：' + msg + status, 'bg-red-600'); 
+                }
+            }
+        }
+        async function doDeleteFactory(id) { 
+            if(!confirm('确认彻底删除该工厂档案？')) return;
+            try { 
+                await api.delete(`/factories/${id}`); 
+                // 立即在本地内存中移除，确保视觉上的“瞬间消失”
+                allFactories = allFactories.filter(f => f.id !== id);
+                renderFactoryUI(); 
+                toast('✅ 已成功移除', 'bg-emerald-500'); 
+                // 后台同步一次最新数据
+                fetchFactories(); 
+            } catch(e) { toast('❌ 删除失败', 'bg-red-500'); }
+        }
+        async function doDeleteCustomer(id) { 
+            if(!confirm('确认彻底删除该客户档案？')) return;
+            try { 
+                await api.delete(`/customers/${id}`); 
+                // 立即在本地内存中移除，实现瞬间消失
+                allCustomers = allCustomers.filter(c => c.id !== id);
+                renderCustomerUI();
+                toast('✅ 已成功移除', 'bg-emerald-500'); 
+                // 后台同步
+                fetchCustomers();
+            } catch(e) { toast('❌ 删除失败', 'bg-red-500'); }
+        }
 
-        function renderFactoryUI() { getEl('factoryListContent').innerHTML = allFactories.map(f => `<div class="glass-card p-8 border-t-[12px] shadow-lg" style="border-color:${f.color}"><h4 class="text-2xl font-black text-slate-800 mb-2">${f.name}</h4><p class="text-xs text-slate-400 font-bold tracking-widest">${f.address || '未录入生产地址'}</p></div>`).join(''); }
-        function renderCustomerUI() { getEl('customerListContent').innerHTML = allCustomers.map(c => `<div class="glass-card p-8 flex flex-col justify-between min-h-[160px]"><h4 class="text-2xl font-black text-slate-800 tracking-tighter">${c.name}</h4><div class="space-y-1"><p class="text-xs text-slate-400 font-bold">${c.address || '暂无详细发货地址'}</p><p class="text-xs text-indigo-500 font-black tracking-widest">${c.phone || '-'}</p></div></div>`).join(''); }
-        function renderCategoryUI() { getEl('categoryList').innerHTML = allCategories.map(c => `<div class="px-5 py-2.5 bg-indigo-50 text-indigo-600 rounded-2xl text-[11px] font-black flex items-center border border-indigo-100/50 shadow-sm transition-all hover:scale-105"><span>${c}</span><button onclick="deleteCategory('${c}')" class="ml-3 opacity-30 hover:opacity-100 hover:text-rose-500 transition-all font-bold">×</button></div>`).join(''); }
-        async function deleteCategory(n) { if(confirm(`彻底销毁品类 [${n}] 吗？`)) { await api.delete(`/api/categories/${n}`); fetchCategories(); } }
+        
+        async function doSaveFactory() { 
+            try { 
+                const payload = { name: getEl('fName').value, address: getEl('fAddr').value };
+                if(!payload.name) return toast('⚠️ 请填写工厂名称', 'bg-amber-500');
+                const res = await api.post('/factories', payload); 
+                allFactories.push(res.data);
+                toast('✅ 工厂档案已建立', 'bg-emerald-500'); 
+                closeModal('factoryModal'); 
+                renderFactoryUI();
+                fetchFactories(); 
+            } catch(e) { toast('❌ 保存失败', 'bg-red-500'); }
+        }
+        async function doSaveCustomer() { 
+            try { 
+                const payload = { name: getEl('cName').value, address: getEl('cAddr').value, phone: getEl('cPhone').value };
+                if(!payload.name) return toast('⚠️ 请填写客户名称', 'bg-amber-500');
+                const res = await api.post('/customers', payload); 
+                
+                // 立即更新本地数据，实现秒级展示
+                allCustomers.push(res.data);
+                toast('✅ 客户档案已成功建立', 'bg-emerald-500'); 
+                closeModal('customerModal'); 
+                
+                // 立即重绘 UI
+                renderCustomerUI();
+                
+                // 后台同步一次数据
+                fetchCustomers();
+            } catch(e) { toast('❌ 保存失败', 'bg-red-500'); }
+        }
+
+        function renderFactoryUI() { 
+            const isAdmin = currentUser.role === 'admin' || currentUser.role === 'manager';
+            getEl('factoryListContent').innerHTML = allFactories.map(f => `
+                <div class="glass-card p-8 border-t-[12px] shadow-lg relative group" style="border-color:${f.color}">
+                    ${isAdmin ? `<button onclick="doDeleteFactory('${f.id}')" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 p-2 text-rose-300 hover:text-rose-600 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+                    <h4 class="text-2xl font-black text-slate-800 mb-2">${f.name}</h4>
+                    <p class="text-xs text-slate-400 font-bold tracking-widest">${f.address || '未录入生产地址'}</p>
+                </div>`).join(''); 
+            lucide.createIcons();
+        }
+        function renderCustomerUI() { 
+            const isAdmin = currentUser.role === 'admin' || currentUser.role === 'manager';
+            // 权限隔离优化：管理员见全部；员工见自己创建的 或 与自己产品相关的
+            const filtered = allCustomers.filter(c => {
+                if (isAdmin) return true;
+                const isCreator = c.createdBy === currentUser.id;
+                const hasRelatedProduct = products.some(p => p.customerName === c.name && p.createdBy === currentUser.id);
+                return isCreator || hasRelatedProduct;
+            });
+            
+            getEl('customerListContent').innerHTML = filtered.map(c => `
+                <div class="glass-card p-8 flex flex-col justify-between min-h-[160px] shadow-sm relative group">
+                    ${isAdmin ? `<button onclick="doDeleteCustomer('${c.id}')" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 p-2 text-rose-300 hover:text-rose-600 transition-all active:scale-90"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+                    <h4 class="text-2xl font-black text-slate-800 tracking-tighter">${c.name}</h4>
+                    <div class="space-y-1">
+                        <p class="text-xs text-slate-400 font-bold">${c.address || '暂无详细发货地址'}</p>
+                        <p class="text-xs text-indigo-500 font-black tracking-widest">${c.phone || '-'}</p>
+                    </div>
+                </div>`).join(''); 
+            lucide.createIcons();
+        }
+        function renderCategoryUI() { 
+            getEl('categoryList').innerHTML = allCategories.map(c => {
+                // 使用 base64 或 16进制编码来安全传递中文字符串作为参数
+                const safeName = btoa(unescape(encodeURIComponent(c)));
+                return `
+                <div class="px-5 py-2.5 bg-indigo-50 text-indigo-600 rounded-2xl text-[11px] font-black flex items-center border border-indigo-100/50 shadow-sm transition-all hover:scale-105">
+                    <span>${c}</span>
+                    <button onclick="handleDeleteCategory('${safeName}')" class="ml-3 p-1 opacity-40 hover:opacity-100 hover:text-rose-500 transition-all font-bold text-lg">×</button>
+                </div>`;
+            }).join(''); 
+        }
+
+        async function handleDeleteCategory(encodedName) {
+            const n = decodeURIComponent(escape(atob(encodedName)));
+            if(!confirm(`彻底销毁品类 [${n}] 吗？此操作将从全局目录移除该选项。`)) return;
+            try {
+                await api.delete(`/categories/${encodeURIComponent(n)}`);
+                toast('✅ 品类已成功销毁', 'bg-emerald-600');
+                fetchCategories();
+            } catch(e) {
+                toast('❌ 销毁失败：权限不足或网络异常', 'bg-red-600');
+            }
+        }
+
+        
         async function addCategory() { const n = getEl('newCatName').value; if(!n) return; await api.post('/categories', { name: n }); getEl('newCatName').value=''; fetchCategories(); toast('✅ 品类目录已更新', 'bg-emerald-500'); }
         async function updateProfile(isU) { 
             const payload = isU ? { newUsername: getEl('settingNewUsername').value } : { oldPassword: getEl('oldPass').value, newPassword: getEl('newPass').value };
