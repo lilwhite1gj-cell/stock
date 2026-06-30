@@ -349,13 +349,39 @@
         <div class="bg-white w-full max-w-md rounded-[40px] p-10 shadow-2xl"><h3 class="text-2xl font-black mb-6 tracking-tighter text-center">新增客户档案</h3><div class="space-y-4"><input type="text" id="cName" placeholder="客户姓名/公司名" class="w-full p-5 bg-slate-50 rounded-2xl border-0 outline-none" autocomplete="off"><input type="text" id="cAddr" placeholder="默认发货地址" class="w-full p-5 bg-slate-50 rounded-2xl border-0 outline-none" autocomplete="off"><input type="text" id="cPhone" placeholder="联系电话" class="w-full p-5 bg-slate-50 rounded-2xl border-0 outline-none" autocomplete="off"><button onclick="doSaveCustomer()" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl active:scale-95 transition-all">保存客户档案</button><button onclick="closeModal('customerModal')" class="w-full text-slate-400 py-2 text-sm font-bold text-center w-full">取消操作</button></div></div>
     </div>
 
+
+    <!-- 自定义确认弹窗 (解决原生 confirm 提示异常问题) -->
+    <div id="confirmModal" class="hidden fixed inset-0 z-[500] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-md">
+        <div class="bg-white w-full max-w-sm rounded-[40px] p-10 shadow-2xl animate-in zoom-in-95 duration-300">
+            <div class="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 mx-auto mb-6"><i data-lucide="alert-triangle" class="w-8 h-8"></i></div>
+            <h3 class="text-xl font-black text-slate-800 text-center mb-4">确认执行此操作？</h3>
+            <p id="confirmMsg" class="text-sm text-slate-400 font-bold text-center mb-8 leading-relaxed"></p>
+            <div class="space-y-3">
+                <button id="confirmYes" class="w-full bg-rose-600 text-white py-5 rounded-2xl font-black shadow-xl active:scale-95 transition-all">确认并执行</button>
+                <button onclick="closeModal('confirmModal')" class="w-full bg-slate-100 text-slate-400 py-5 rounded-2xl font-black active:scale-95 transition-all">取消</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // 全局禁用数字输入框的鼠标滚轮调节功能，防止与页面滚动冲突
         document.addEventListener('wheel', function(e) { if (document.activeElement.type === 'number') document.activeElement.blur(); });
+
+        let confirmCallback = null;
+        function customConfirm(msg, cb) {
+            getEl('confirmMsg').innerText = msg;
+            confirmCallback = cb;
+            openModal('confirmModal');
+            getEl('confirmYes').onclick = () => {
+                closeModal('confirmModal');
+                if(confirmCallback) confirmCallback();
+            };
+            lucide.createIcons();
+        }
         const api = axios.create({ baseURL: '/api' });
         api.interceptors.request.use(config => { const token = localStorage.getItem('token'); if (token) config.headers.Authorization = `Bearer ${token}`; return config; });
 
-                let currentUser = null; try { currentUser = JSON.parse(localStorage.getItem("user")); } catch(e) { console.error("User parse error", e); }
+                let currentUser = null; try { const stored = localStorage.getItem("user"); if(stored && stored !== "undefined") currentUser = JSON.parse(stored); } catch(e) { console.error("User parse error", e); localStorage.removeItem("user"); }
         let products = [], allCategories = [], allFactories = [], allCustomers = [];
         let qtyChart = null, valueChart = null, sampleChart = null;
         let displayCurrency = 'CNY', exchangeRate = 7.25;
@@ -369,15 +395,23 @@
         function logout() { localStorage.clear(); location.reload(); }
 
         async function fetchExchangeRate() {
-            const displays = document.querySelectorAll('.rate-display'); displays.forEach(el => el.innerText = '正在同步实时汇率...');
+            const displays = document.querySelectorAll('.rate-display'); 
+            displays.forEach(el => el.innerText = '正在尝试公网同步...');
             try { 
-                const res = await api.get('/exchange-rate'); exchangeRate = res.data.rate; 
-                const time = new Date().toLocaleTimeString(); 
-                displays.forEach(el => { el.innerHTML = `<i data-lucide="refresh-cw" class="w-2 h-2 mr-1 inline animate-spin"></i>当前实时汇率: 1 USD = ${exchangeRate} CNY <span class="opacity-40 font-normal ml-1">(${time})</span>`; }); 
-                lucide.createIcons(); renderInventory(); renderTrans(); 
-            } catch (e) { displays.forEach(el => el.innerText = `连接外汇中心失败，使用预设: 1 USD = ${exchangeRate} CNY`); }
+                const res = await api.get('/exchange-rate?force=true'); 
+                exchangeRate = res.data.rate; 
+                const updateTime = new Date(res.data.lastUpdate).toLocaleTimeString(); 
+                displays.forEach(el => { 
+                    el.innerHTML = `<i data-lucide="globe" class="w-2 h-2 mr-1 inline text-indigo-500"></i>最新公网汇率: 1 USD = ${exchangeRate} CNY <span class="opacity-40 font-normal ml-1">(${updateTime})</span>`; 
+                }); 
+                lucide.createIcons(); 
+                renderInventory(); 
+                renderTrans(); 
+            } catch (e) { 
+                displays.forEach(el => el.innerText = `公网连接超时，使用缓存汇率: 1 USD = ${exchangeRate} CNY`); 
+            }
         }
-        setInterval(fetchExchangeRate, 1800000);
+        setInterval(fetchExchangeRate, 600000);
 
         async function fetchCategories() { try { const res = await api.get('/categories'); allCategories = res.data; const opts = allCategories.map(c => `<option value="${c}">${c}</option>`).join(''); getEl('pCat').innerHTML = opts; getEl('qCat').innerHTML = opts; renderCategoryUI(); } catch (e) {} }
         async function fetchFactories() { try { const res = await api.get('/factories'); allFactories = res.data; const opts = allFactories.map(f => `<option value="${f.id}">${f.name}</option>`).join(''); const h = '<option value="" disabled selected>选择指派代工厂...</option>' + opts; getEl('pFact').innerHTML = h; getEl('qFact').innerHTML = h; renderFactoryUI(); } catch (e) {} }
@@ -387,7 +421,11 @@
             const u = getEl('username').value, p = getEl('password').value; if(!u || !p) return toast('⚠️ 请输入账号密码', 'bg-amber-500');
             getEl('btnLogin').disabled = true; getEl('btnLogin').innerText = '正在验证身份...';
             try { const res = await api.post('/login', { username: u, password: p }); localStorage.setItem('token', res.data.token); localStorage.setItem('user', JSON.stringify(res.data.user)); location.reload(); } 
-            catch (e) { toast('❌ 登录失败：用户名或密码错误', 'bg-red-600'); getEl('btnLogin').disabled = false; getEl('btnLogin').innerText = '登 录'; }
+            catch (e) { 
+                const errorMsg = e.response?.data?.message || '用户名或密码错误';
+                toast('❌ 登录失败：' + errorMsg, 'bg-red-600'); 
+                getEl('btnLogin').disabled = false; getEl('btnLogin').innerText = '登 录'; 
+            }
         }
         
         
@@ -419,7 +457,12 @@
             } catch(e) { toast('❌ 验证失败：信息不匹配', 'bg-red-600'); }
         }
 
-        function toggleAuth(isReg) { getEl('authTitle').innerText = isReg ? '注册新账号' : '欢迎回来'; getEl('regGroup').classList.toggle('hidden', !isReg); getEl('btnLogin').parentElement.classList.toggle('hidden', isReg); }
+        function toggleAuth(isReg) { 
+            getEl('authTitle').innerText = isReg ? '注册新账号' : '欢迎回来'; 
+            getEl('regGroup').classList.toggle('hidden', !isReg); 
+            getEl('loginGroup').classList.toggle('hidden', isReg); 
+            getEl('forgotGroup').classList.add('hidden');
+        }
         async function register() { const u = getEl('username').value, p = getEl('password').value, ph = getEl('regPhone').value, q = getEl('regQuestion').value, a = getEl('regAnswer').value; if(!u || !p || !ph || !q || !a) return toast('⚠️ 请填写完整注册信息', 'bg-amber-500'); try { await api.post('/register', { username: u, password: p, phone: ph, question: q, answer: a }); toast('✅ 注册成功，欢迎加入', 'bg-emerald-500'); toggleAuth(false); } catch (e) { toast('❌ 注册失败：用户名可能已被占用', 'bg-red-600'); } }
 
         function initApp() {
@@ -927,21 +970,37 @@
             } catch(e) {}
         }
         
-        async function doDeleteUser(id, name) {
-            if(!confirm(`彻底从系统移除员工 [${name}]？此操作不可撤销且将导致其无法登录。`)) return;
-            try {
-                await api.delete(`/admin/users/${id}`);
-                toast('✅ 账号已从系统中注销', 'bg-emerald-600');
-                fetchUsers();
-            } catch(e) {
-                toast('❌ 操作失败：' + (e.response?.data?.message || '无法删除最高管理员或本人'), 'bg-red-600');
-            }
+                async function doDeleteUser(id, name) {
+            customConfirm(`彻底从系统移除员工 [${name}]？此操作不可撤销且将导致其无法登录。`, async () => {
+                try {
+                    await api.delete(`/admin/users/${id}`);
+                    toast('✅ 账号已从系统中注销', 'bg-emerald-600');
+                    fetchUsers();
+                } catch(e) {
+                    toast('❌ 操作失败：' + (e.response?.data?.message || '无法删除最高管理员或本人'), 'bg-red-600');
+                }
+            });
         }
-        async function changeRole(userId, newRole) { if(confirm('确认调整该账户权限？')) { await api.post('/admin/change-role', { userId, newRole }); fetchUsers(); toast('✅ 权限状态已实时同步', 'bg-emerald-500'); } }
-        async function resetUserPassword(id, name) { const p = prompt(`正在强制重置 [${name}] 的密码 (不少于6位):`); if(p && p.length>=6) api.post('/admin/reset-user-password', { userId: id, newPassword: p }).then(() => toast('✅ 密码已重置', 'bg-emerald-500')); }
-        async function doDeleteProduct(id) { if(confirm('彻底删除档案？已有流水则无法删除。')) { try { await api.delete(`/products/${id}`); toast('✅ 已移除', 'bg-emerald-500'); renderInventory(); } catch(e) { toast('❌ 无法删除：已有业务流水记录', 'bg-red-500'); } } }
-        async function doDeleteTrans(id) { 
-            if(confirm('确认彻底撤销该笔流水记录？相关库存将同步调整且无法恢复。')) { 
+                async function changeRole(userId, newRole) { 
+            customConfirm('确认调整该账户权限？', async () => { 
+                try {
+                    await api.post('/admin/change-role', { userId, newRole }); 
+                    fetchUsers(); 
+                    toast('✅ 权限状态已实时同步', 'bg-emerald-500'); 
+                } catch(e) { toast('❌ 调整失败', 'bg-red-600'); }
+            }); 
+        }
+                async function doDeleteProduct(id) { 
+            customConfirm('彻底删除档案？已有流水则无法删除。', async () => { 
+                try { 
+                    await api.delete(`/products/${id}`); 
+                    toast('✅ 已移除', 'bg-emerald-500'); 
+                    renderInventory(); 
+                } catch(e) { toast('❌ 无法删除：已有业务流水记录', 'bg-red-500'); } 
+            }); 
+        }
+                async function doDeleteTrans(id) { 
+            customConfirm('确认彻底撤销该笔流水记录？相关库存将同步调整且无法恢复。', async () => { 
                 try { 
                     const res = await api.delete(`/transactions/${id}`); 
                     toast('✅ 流水已成功撤销，数据已同步', 'bg-emerald-600'); 
@@ -951,32 +1010,32 @@
                     const msg = e.response?.data?.message || '连接断开(ERR:Net)';
                     const status = e.response?.status ? ` [Code: ${e.response.status}]` : '';
                     toast('❌ 撤销失败：' + msg + status, 'bg-red-600'); 
-                }
-            }
+                } 
+            }); 
         }
-        async function doDeleteFactory(id) { 
-            if(!confirm('确认彻底删除该工厂档案？')) return;
-            try { 
-                await api.delete(`/factories/${id}`); 
-                // 立即在本地内存中移除，确保视觉上的“瞬间消失”
-                allFactories = allFactories.filter(f => f.id !== id);
-                renderFactoryUI(); 
-                toast('✅ 已成功移除', 'bg-emerald-500'); 
-                // 后台同步一次最新数据
-                fetchFactories(); 
-            } catch(e) { toast('❌ 删除失败', 'bg-red-500'); }
+                async function doDeleteFactory(id) { 
+            customConfirm('确认彻底删除该工厂档案？', async () => {
+                try { 
+                    await api.delete(`/factories/${id}`); 
+                    allFactories = allFactories.filter(f => f.id !== id);
+                    renderFactoryUI(); 
+                    toast('✅ 已成功移除', 'bg-emerald-500'); 
+                    fetchFactories(); 
+                } catch(e) { toast('❌ 删除失败', 'bg-red-500'); }
+            });
         }
         async function doDeleteCustomer(id) { 
-            if(!confirm('确认彻底删除该客户档案？')) return;
-            try { 
-                await api.delete(`/customers/${id}`); 
-                // 立即在本地内存中移除，实现瞬间消失
-                allCustomers = allCustomers.filter(c => c.id !== id);
-                renderCustomerUI();
-                toast('✅ 已成功移除', 'bg-emerald-500'); 
-                // 后台同步
-                fetchCustomers();
-            } catch(e) { toast('❌ 删除失败', 'bg-red-500'); }
+            customConfirm('确认彻底删除该客户档案？', async () => {
+                try { 
+                    await api.delete(`/customers/${id}`); 
+                    // 立即在本地内存中移除，实现瞬间消失
+                    allCustomers = allCustomers.filter(c => c.id !== id);
+                    renderCustomerUI();
+                    toast('✅ 已成功移除', 'bg-emerald-500'); 
+                    // 后台同步
+                    fetchCustomers();
+                } catch(e) { toast('❌ 删除失败', 'bg-red-500'); }
+            });
         }
 
         
@@ -1078,7 +1137,7 @@
         function openEditModal(id) { const p = products.find(x => x.id === id); getEl('editProdId').value = p.id; ['pName','pSku','pPrice','pPack','pNotes','pCust','pCustAddr','pCustPhone','pMat','pSpec'].forEach(k => { const el = getEl(k); if(el) el.value = p[k.slice(1).charAt(0).toLowerCase() + k.slice(2)] || ''; }); getEl('pCat').value = p.category; getEl('pFact').value = p.factoryId; getEl('pCurr').value = p.currency || 'CNY'; getEl('prodModalTitle').innerText = '档案修改'; updateDynamicHints('p'); openModal('prodModal'); }
         function toggleQuickFields() { const isN = getEl('isNew').checked; getEl('oldPBox').classList.toggle('hidden', isN); getEl('newPBox').classList.toggle('hidden', !isN); if(isN) updateDynamicHints('q'); }
         function previewImg(u) { getEl('imgPreviewContent').src = u; getEl('imgPreviewOverlay').classList.remove('hidden'); }
-        function updateProductSelects() { const el = getEl('tProd'); if(el) el.innerHTML = '<option value="" disabled selected>🔍 搜索并选择产品档案...</option>' + products.map(p => `<option value="${p.id}">${p.name} [${p.sku}]</option>`).join(''); }
+        function updateProductSelects() { const el = getEl('tProd'); if(el) el.innerHTML = '<option value="" disabled selected>🔍 搜索并选择产品档案...</option>' + products.map(p => `<option value="${p.id}">${p.name}  /  ${p.sku}</option>`) .join(''); }
 
         initApp();
     </script>

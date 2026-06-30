@@ -22,89 +22,7 @@
       "securityAnswer": "泉州"
     }
   ],
-  "products": [
-    {
-      "name": "111",
-      "category": "嘴贴",
-      "unitPrice": 100,
-      "currency": "CNY",
-      "factoryId": "",
-      "packaging": "",
-      "sku": "",
-      "spec": "",
-      "material": "",
-      "customerName": "小白",
-      "id": "1782789965882",
-      "image": null,
-      "createdBy": "1",
-      "creatorName": "admin"
-    },
-    {
-      "name": "222",
-      "category": "嘴贴",
-      "unitPrice": 200,
-      "currency": "CNY",
-      "factoryId": "",
-      "packaging": "",
-      "sku": "",
-      "spec": "",
-      "material": "",
-      "customerName": "小黑",
-      "id": "1782789989614",
-      "image": null,
-      "createdBy": "1",
-      "creatorName": "admin"
-    },
-    {
-      "name": "333",
-      "category": "鼻贴",
-      "unitPrice": 300,
-      "currency": "CNY",
-      "factoryId": "",
-      "packaging": "",
-      "sku": "",
-      "spec": "",
-      "material": "",
-      "customerName": "小绿",
-      "id": "1782790178914",
-      "image": null,
-      "createdBy": "1782784580368",
-      "creatorName": "white"
-    },
-    {
-      "name": "444",
-      "category": "嘴贴",
-      "unitPrice": 400,
-      "currency": "CNY",
-      "factoryId": "",
-      "packaging": "30",
-      "sku": "",
-      "spec": "1*1",
-      "material": "pvc",
-      "customerName": "小蓝",
-      "id": "1782790234848",
-      "image": "/uploads/1782790234842.jpg",
-      "createdBy": "1782784580368",
-      "creatorName": "white",
-      "notes": "测试功能"
-    },
-    {
-      "name": "1",
-      "category": "嘴贴",
-      "unitPrice": 0,
-      "currency": "CNY",
-      "factoryId": "",
-      "packaging": "",
-      "sku": "",
-      "spec": "",
-      "material": "",
-      "customerName": "通用",
-      "id": "1782799283511",
-      "image": "/uploads/1782799283503.jpg",
-      "createdBy": "1",
-      "creatorName": "admin"
-    }
-  ],
+  "products": [],
   "transactions": [],
   "categories": [
     "嘴贴",
@@ -114,34 +32,5 @@
     "彩袋"
   ],
   "factories": [],
-  "customers": [
-    {
-      "name": "小白",
-      "address": "",
-      "phone": "",
-      "id": "1782789965854",
-      "createdBy": "1"
-    },
-    {
-      "name": "小黑",
-      "address": "",
-      "phone": "",
-      "id": "1782789989592",
-      "createdBy": "1"
-    },
-    {
-      "name": "小绿",
-      "address": "",
-      "phone": "",
-      "id": "1782790178896",
-      "createdBy": "1782784580368"
-    },
-    {
-      "name": "小蓝",
-      "address": "",
-      "phone": "",
-      "id": "1782790234821",
-      "createdBy": "1782784580368"
-    }
-  ]
+  "customers": []
 }
