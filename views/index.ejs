@@ -153,9 +153,18 @@
                             <span onclick="fetchExchangeRate()" class="rate-display cursor-pointer hover:text-indigo-600 transition-colors text-[9px] font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md tracking-widest text-center" title="点击手动刷新汇率">正在同步汇率...</span>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-4">
-                        <div class="flex bg-white px-4 py-1 rounded-[22px] border border-slate-100 shadow-sm focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all"><i data-lucide="search" class="m-4 text-slate-300"></i><input type="text" id="invSearch" oninput="renderInventory()" placeholder="搜索产品名称、货号..." class="flex-1 bg-transparent outline-none font-bold text-lg" autocomplete="off"></div>
-                        <div class="flex items-center space-x-3 bg-white px-6 py-4 rounded-[22px] shadow-sm border border-slate-100 self-end md:self-start"><span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sort By:</span><select id="invSortField" onchange="renderInventory()" class="bg-transparent outline-none font-black text-sm text-indigo-600"><option value="id">录入时间</option><option value="name">产品名称</option><option value="customerName">客户维度</option><option value="balance">库存量</option><option value="value">资产价值</option></select></div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="md:col-span-2 flex bg-white px-4 py-1 rounded-[22px] border border-slate-100 shadow-sm focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all"><i data-lucide="search" class="m-4 text-slate-300"></i><input type="text" id="invSearch" oninput="renderInventory()" placeholder="搜索产品名称、货号..." class="flex-1 bg-transparent outline-none font-bold text-lg" autocomplete="off"></div>
+                        <div class="glass-card bg-indigo-600 p-4 flex items-center justify-between text-white shadow-xl shadow-indigo-100">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><i data-lucide="calculator" class="w-5 h-5 text-white"></i></div>
+                                <div>
+                                    <p class="text-[9px] font-black uppercase opacity-60 tracking-widest">当前库存总估值</p>
+                                    <p id="totalInvValue" class="text-xl font-black tracking-tighter">¥ 0.00</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="md:col-span-3 flex items-center space-x-3 bg-white px-6 py-4 rounded-[22px] shadow-sm border border-slate-100 self-end md:self-start"><span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sort By:</span><select id="invSortField" onchange="renderInventory()" class="bg-transparent outline-none font-black text-sm text-indigo-600"><option value="id">录入时间</option><option value="name">产品名称</option><option value="customerName">客户维度</option><option value="balance">库存量</option><option value="value">资产价值</option></select></div>
                     </div>
                     <div class="hidden md:block glass-card table-container-fix overflow-x-auto">
                         <table class="w-full text-left border-collapse table-fixed min-w-[1000px]">
@@ -489,6 +498,10 @@
                     return matchesSearch && (isAdmin || isSample || isMine);
                 });
                 filtered.sort((a, b) => { let vA = a[sortField], vB = b[sortField]; if (sortField === 'value') { vA = a.balance * a.unitPrice; vB = b.balance * b.unitPrice; } return (typeof vA === 'string') ? vA.localeCompare(vB) : vB - vA; });
+                
+                // 计算汇总金额
+                const totalVal = filtered.reduce((sum, p) => sum + (p.balance * p.unitPrice), 0);
+                getEl('totalInvValue').innerText = formatMoney(totalVal, 'CNY');
                 getEl('invTable').innerHTML = filtered.map(p => {
                     const fact = allFactories.find(f => f.id === p.factoryId); const isAdmin = currentUser.role !== 'staff';
                     const actBtns = isAdmin ? `<div class="flex space-x-2 mt-2"><button onclick="event.stopPropagation(); openEditModal('${p.id}')" class="p-2 text-indigo-400 hover:bg-indigo-50 rounded-lg transition-colors"><i data-lucide="edit-3" class="w-4 h-4"></i></button><button onclick="event.stopPropagation(); doDeleteProduct('${p.id}')" class="p-2 text-rose-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>` : '';

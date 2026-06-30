@@ -22,8 +22,127 @@
       "securityAnswer": "泉州"
     }
   ],
-  "products": [],
-  "transactions": [],
+  "products": [
+    {
+      "name": "111",
+      "category": "嘴贴",
+      "unitPrice": 100,
+      "currency": "CNY",
+      "factoryId": "",
+      "packaging": "",
+      "sku": "",
+      "spec": "",
+      "material": "",
+      "customerName": "小白",
+      "id": "1782789965882",
+      "image": null,
+      "createdBy": "1",
+      "creatorName": "admin"
+    },
+    {
+      "name": "222",
+      "category": "嘴贴",
+      "unitPrice": 200,
+      "currency": "CNY",
+      "factoryId": "",
+      "packaging": "",
+      "sku": "",
+      "spec": "",
+      "material": "",
+      "customerName": "小黑",
+      "id": "1782789989614",
+      "image": null,
+      "createdBy": "1",
+      "creatorName": "admin"
+    },
+    {
+      "name": "333",
+      "category": "鼻贴",
+      "unitPrice": 300,
+      "currency": "CNY",
+      "factoryId": "",
+      "packaging": "",
+      "sku": "",
+      "spec": "",
+      "material": "",
+      "customerName": "小绿",
+      "id": "1782790178914",
+      "image": null,
+      "createdBy": "1782784580368",
+      "creatorName": "white"
+    },
+    {
+      "name": "444",
+      "category": "嘴贴",
+      "unitPrice": 400,
+      "currency": "CNY",
+      "factoryId": "",
+      "packaging": "30",
+      "sku": "",
+      "spec": "1*1",
+      "material": "pvc",
+      "customerName": "小蓝",
+      "id": "1782790234848",
+      "image": "/uploads/1782790234842.jpg",
+      "createdBy": "1782784580368",
+      "creatorName": "white",
+      "notes": "测试功能"
+    }
+  ],
+  "transactions": [
+    {
+      "productId": "1782789965882",
+      "type": "in",
+      "quantity": 1000,
+      "orderNo": "",
+      "logisticsNo": "",
+      "notes": "",
+      "id": "1782789965897",
+      "userId": "1",
+      "username": "admin",
+      "date": "2026-06-30T03:26:05.897Z",
+      "image": null
+    },
+    {
+      "productId": "1782789989614",
+      "type": "in",
+      "quantity": 1000,
+      "orderNo": "",
+      "logisticsNo": "",
+      "notes": "",
+      "id": "1782789989625",
+      "userId": "1",
+      "username": "admin",
+      "date": "2026-06-30T03:26:29.625Z",
+      "image": null
+    },
+    {
+      "productId": "1782790178914",
+      "type": "in",
+      "quantity": 1000,
+      "orderNo": "",
+      "logisticsNo": "",
+      "notes": "",
+      "id": "1782790178925",
+      "userId": "1782784580368",
+      "username": "white",
+      "date": "2026-06-30T03:29:38.925Z",
+      "image": null
+    },
+    {
+      "productId": "1782790234848",
+      "type": "in",
+      "quantity": 1000,
+      "orderNo": "11",
+      "logisticsNo": "22",
+      "notes": "测试功能",
+      "id": "1782790234864",
+      "userId": "1782784580368",
+      "username": "white",
+      "date": "2026-06-30T03:30:34.864Z",
+      "image": "/uploads/1782790234859.jpg"
+    }
+  ],
   "categories": [
     "嘴贴",
     "鼻贴",
@@ -32,5 +151,34 @@
     "彩袋"
   ],
   "factories": [],
-  "customers": []
+  "customers": [
+    {
+      "name": "小白",
+      "address": "",
+      "phone": "",
+      "id": "1782789965854",
+      "createdBy": "1"
+    },
+    {
+      "name": "小黑",
+      "address": "",
+      "phone": "",
+      "id": "1782789989592",
+      "createdBy": "1"
+    },
+    {
+      "name": "小绿",
+      "address": "",
+      "phone": "",
+      "id": "1782790178896",
+      "createdBy": "1782784580368"
+    },
+    {
+      "name": "小蓝",
+      "address": "",
+      "phone": "",
+      "id": "1782790234821",
+      "createdBy": "1782784580368"
+    }
+  ]
 }
