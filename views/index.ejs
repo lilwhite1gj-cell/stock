@@ -545,7 +545,7 @@
                                     <div class="text-[10px] text-slate-300 font-mono mt-1 uppercase tracking-widest">${p.sku}</div>
                                 </div>
                             </div>
-                            <div class="text-right flex-shrink-0">
+                            <div class="text-right flex-shrink-0 min-w-[80px]">
                                 <div class="text-xl font-black text-emerald-600 tracking-tighter">${formatMoney(p.balance * p.unitPrice, p.currency)}</div>
                                 <div class="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-0.5">资产估值</div>
                             </div>
@@ -593,8 +593,8 @@
 
                         <!-- 数值区 -->
                         <div class="text-right flex-shrink-0">
-                            <p class="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter mb-1">${formatMoney(t.quantity * (p?.unitPrice || 0), p?.currency)}</p>
-                            <p class="text-xs md:text-base font-black ${isIn ? 'text-emerald-600' : 'text-rose-600'} uppercase tracking-widest">${isIn ? '+' : '-'}${t.quantity} Bags</p>
+                            <p class="text-xl md:text-4xl font-black text-slate-900 tracking-tighter mb-1 break-all">${formatMoney(t.quantity * (p?.unitPrice || 0), p?.currency)}</p>
+                            <p class="text-[10px] md:text-sm font-black ${isIn ? 'text-emerald-600' : 'text-rose-600'} uppercase tracking-widest">${isIn ? '+' : '-'}${t.quantity} Bags</p>
                         </div>
                         ${delBtn}
                     </div>`;
