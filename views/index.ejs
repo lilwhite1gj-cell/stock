@@ -108,20 +108,20 @@
                 <div class="w-full max-w-sm bg-white p-10 rounded-[40px] shadow-2xl border border-indigo-50/50">
                     <div class="text-center mb-10"><div class="w-20 h-20 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-2xl shadow-indigo-200 mx-auto mb-6"><i data-lucide="shield-check" class="text-white w-10 h-10"></i></div><h2 id="authTitle" class="text-3xl font-black text-slate-900 tracking-tighter text-center">欢迎回来</h2></div>
                     <div class="space-y-4" id="loginForm">
-                        <input type="text" id="username" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-center" placeholder="用户名">
-                        <input type="password" id="password" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-center" placeholder="登录密码">
+                        <input type="text" id="username" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-center" placeholder="用户名" autocomplete="off">
+                        <input type="password" id="password" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-center" placeholder="登录密码" autocomplete="off">
                         <div id="loginGroup" class="pt-2"><button id="btnLogin" onclick="login()" class="w-full bg-indigo-600 text-white py-5 rounded-[22px] font-black text-lg shadow-xl shadow-indigo-100 active:scale-95 transition-transform">登 录</button>
                             <div class="flex justify-between mt-6 px-2"><button onclick="toggleAuth(true)" class="text-slate-400 font-bold text-xs hover:text-indigo-600">注册新账号</button><button onclick="showForgotPassword()" class="text-indigo-500 font-bold text-xs underline underline-offset-4">忘记密码?</button></div>
                         </div>
                         <div id="regGroup" class="hidden pt-2 space-y-4">
-                            <input type="text" id="regPhone" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] focus:ring-2 focus:ring-indigo-500 outline-none font-bold" placeholder="手机号 (仅用于找回密码)">
+                            <input type="text" id="regPhone" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] focus:ring-2 focus:ring-indigo-500 outline-none font-bold" placeholder="手机号 (仅用于找回密码)" autocomplete="off">
                             <select id="regQuestion" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] font-bold text-slate-500 appearance-none text-center"><option value="" disabled selected>设置密保问题</option><option value="出生地">您的出生地是哪里？</option><option value="母亲姓名">您母亲的姓名是？</option><option value="第一只宠物">第一只宠物的名字？</option></select>
-                            <input type="text" id="regAnswer" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] font-bold text-center" placeholder="密保答案">
+                            <input type="text" id="regAnswer" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] font-bold text-center" placeholder="密保答案" autocomplete="off">
                             <button id="btnReg" onclick="register()" class="w-full bg-emerald-600 text-white py-5 rounded-[22px] font-black text-lg shadow-xl active:scale-95 transition-transform">完成注册并返回登录</button>
                         </div>
                         <div id="forgotGroup" class="hidden pt-2 space-y-4">
                             <div id="forgotStep1" class="space-y-4 text-center"><p class="text-xs text-slate-400 font-bold px-4 leading-relaxed">系统将根据用户名调取密保问题</p><button onclick="verifyUserForForgot()" class="w-full bg-indigo-600 text-white py-5 rounded-[22px] font-black active:scale-95 transition-transform">获取我的密保问题</button></div>
-                            <div id="forgotStep2" class="hidden space-y-4 text-center"><div class="bg-indigo-50 p-5 rounded-[22px] text-indigo-700 text-xs font-black border border-indigo-100/50" id="displayQuestion"></div><input type="text" id="forgotPhone" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] text-center" placeholder="预留手机号"><input type="text" id="forgotAnswer" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] text-center" placeholder="密保答案"><input type="password" id="forgotNewPass" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] text-center" placeholder="新密码 (6位以上)"><button onclick="resetPasswordNow()" class="w-full bg-indigo-600 text-white py-5 rounded-[22px] font-black shadow-xl active:scale-95 transition-transform">重置并登录系统</button></div>
+                            <div id="forgotStep2" class="hidden space-y-4 text-center"><div class="bg-indigo-50 p-5 rounded-[22px] text-indigo-700 text-xs font-black border border-indigo-100/50" id="displayQuestion"></div><input type="text" id="forgotPhone" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] text-center" placeholder="预留手机号" autocomplete="off"><input type="text" id="forgotAnswer" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] text-center" placeholder="密保答案" autocomplete="off"><input type="password" id="forgotNewPass" class="w-full px-6 py-5 bg-slate-50 border-0 rounded-[22px] text-center" placeholder="新密码 (6位以上)" autocomplete="off"><button onclick="resetPasswordNow()" class="w-full bg-indigo-600 text-white py-5 rounded-[22px] font-black shadow-xl active:scale-95 transition-transform">重置并登录系统</button></div>
                             <button onclick="toggleAuth(false)" class="w-full text-slate-400 font-bold text-xs mt-4">放弃重置</button>
                         </div>
                     </div>
@@ -154,7 +154,7 @@
                         </div>
                     </div>
                     <div class="flex flex-col gap-4">
-                        <div class="flex bg-white px-4 py-1 rounded-[22px] border border-slate-100 shadow-sm focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all"><i data-lucide="search" class="m-4 text-slate-300"></i><input type="text" id="invSearch" oninput="renderInventory()" placeholder="搜索产品名称、货号..." class="flex-1 bg-transparent outline-none font-bold text-lg"></div>
+                        <div class="flex bg-white px-4 py-1 rounded-[22px] border border-slate-100 shadow-sm focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all"><i data-lucide="search" class="m-4 text-slate-300"></i><input type="text" id="invSearch" oninput="renderInventory()" placeholder="搜索产品名称、货号..." class="flex-1 bg-transparent outline-none font-bold text-lg" autocomplete="off"></div>
                         <div class="flex items-center space-x-3 bg-white px-6 py-4 rounded-[22px] shadow-sm border border-slate-100 self-end md:self-start"><span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sort By:</span><select id="invSortField" onchange="renderInventory()" class="bg-transparent outline-none font-black text-sm text-indigo-600"><option value="id">录入时间</option><option value="name">产品名称</option><option value="customerName">客户维度</option><option value="balance">库存量</option><option value="value">资产价值</option></select></div>
                     </div>
                     <div class="hidden md:block glass-card table-container-fix overflow-x-auto">
@@ -207,7 +207,7 @@
                             <div class="space-y-4">
                                 <div>
                                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1">当前显示姓名</label>
-                                    <input type="text" id="settingNewUsername" class="w-full bg-slate-50 p-4 md:p-5 rounded-[22px] font-black border-0 outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all text-lg text-slate-700">
+                                    <input type="text" id="settingNewUsername" class="w-full bg-slate-50 p-4 md:p-5 rounded-[22px] font-black border-0 outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all text-lg text-slate-700" autocomplete="off">
                                 </div>
                                 <button onclick="updateProfile(true)" class="w-full bg-slate-900 text-white py-4 md:py-5 rounded-[22px] font-black shadow-xl active:scale-95 transition-transform">同步更新档案</button>
                             </div>
@@ -220,8 +220,8 @@
                                 <h3 class="text-xl font-black text-slate-700">安全密钥管理</h3>
                             </div>
                             <div class="space-y-4">
-                                <input type="password" id="oldPass" placeholder="当前旧密码" class="w-full bg-slate-50 p-4 md:p-5 rounded-[22px] border-0 outline-none focus:ring-4 focus:ring-rose-500/10 transition-all">
-                                <input type="password" id="newPass" placeholder="设置新密钥 (不少于6位)" class="w-full bg-slate-50 p-4 md:p-5 rounded-[22px] border-0 outline-none focus:ring-4 focus:ring-rose-500/10 transition-all">
+                                <input type="password" id="oldPass" placeholder="当前旧密码" class="w-full bg-slate-50 p-4 md:p-5 rounded-[22px] border-0 outline-none focus:ring-4 focus:ring-rose-500/10 transition-all" autocomplete="off">
+                                <input type="password" id="newPass" placeholder="设置新密钥 (不少于6位)" class="w-full bg-slate-50 p-4 md:p-5 rounded-[22px] border-0 outline-none focus:ring-4 focus:ring-rose-500/10 transition-all" autocomplete="off">
                                 <button onclick="updateProfile(false)" class="w-full bg-indigo-600 text-white py-4 md:py-5 rounded-[22px] font-black shadow-xl active:scale-95 transition-transform">立即确认重置</button>
                             </div>
                         </div>
@@ -260,7 +260,7 @@
                             </div>
                             <div class="space-y-6">
                                 <div class="flex flex-col md:flex-row gap-3">
-                                    <input type="text" id="newCatName" class="flex-1 bg-slate-50 p-4 md:p-5 rounded-[22px] font-bold border-0 outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" placeholder="录入新品类名称...">
+                                    <input type="text" id="newCatName" class="flex-1 bg-slate-50 p-4 md:p-5 rounded-[22px] font-bold border-0 outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" placeholder="录入新品类名称..." autocomplete="off">
                                     <button onclick="addCategory()" class="bg-amber-500 text-white px-8 md:px-10 py-4 md:py-0 rounded-[22px] font-black active:scale-95 shadow-lg shadow-amber-200/50 transition-all">立即添加</button>
                                 </div>
                                 <div id="categoryList" class="flex flex-wrap gap-2 md:gap-3 p-6 bg-slate-50/50 rounded-[32px] border border-slate-50 min-h-[100px]"></div>
@@ -278,15 +278,15 @@
             <div class="md:hidden modal-handle"></div>
             <h3 id="prodModalTitle" class="text-3xl font-black mb-8 tracking-tighter text-center">产品档案编辑</h3>
             <div class="space-y-6 modal-scroll detail-scroll-fix flex-1 pr-2 pb-10">
-                <input type="hidden" id="editProdId">
+                <input type="hidden" id="editProdId" autocomplete="off">
                 <div class="grid grid-cols-2 gap-4"><div><select id="pCat" onchange="updateDynamicHints('p')" class="w-full bg-slate-100 p-5 rounded-[22px] font-black border-0 outline-none"></select></div><div><select id="pFact" class="w-full bg-slate-100 p-5 rounded-[22px] font-black border-0 outline-none"></select></div></div>
-                <input type="text" id="pCust" list="customerDataList" placeholder="所属客户" class="w-full bg-slate-100 p-5 rounded-[22px] font-black border-0 outline-none">
-                <div class="grid grid-cols-2 gap-4"><input type="text" id="pCustAddr" placeholder="发货地址 (选填)" class="p-5 bg-slate-50 rounded-[22px] border-0 text-sm outline-none"><input type="text" id="pCustPhone" placeholder="联系电话 (选填)" class="p-5 bg-slate-50 rounded-[22px] border-0 text-sm outline-none"></div>
-                <input type="text" id="pName" placeholder="产品展示全称" class="w-full bg-slate-100 p-5 rounded-[22px] font-black border-0">
-                <div class="grid grid-cols-2 gap-4"><input type="text" id="pSku" placeholder="货号 SKU" class="p-5 bg-slate-50 rounded-[22px] border-0 font-mono tracking-widest"><input type="text" id="pPack" placeholder="规格 (片/包)" class="p-5 bg-slate-50 rounded-[22px] border-0"></div>
-                <div class="grid grid-cols-3 gap-4"><input type="number" id="pPrice" placeholder="结算单价" class="col-span-2 w-full bg-slate-100 p-5 rounded-[22px] font-black border-0 outline-none"><select id="pCurr" class="w-full bg-slate-100 p-5 rounded-[22px] border-0 outline-none font-black text-indigo-600"><option value="CNY">¥ CNY</option><option value="USD">$ USD</option></select></div>
-                <div class="grid grid-cols-2 gap-4"><input type="text" id="pSpec" placeholder="产品尺寸" class="p-5 bg-slate-50 rounded-[22px] border-0 outline-none"><input type="text" id="pMat" placeholder="材质工艺" class="p-5 bg-slate-50 rounded-[22px] border-0 outline-none"></div>
-                <textarea id="pNotes" placeholder="永久档案备注..." class="w-full bg-slate-50 p-5 rounded-[22px] h-24 border-0 font-bold outline-none"></textarea>
+                <input type="text" id="pCust" list="customerDataList" placeholder="所属客户" class="w-full bg-slate-100 p-5 rounded-[22px] font-black border-0 outline-none" autocomplete="off">
+                <div class="grid grid-cols-2 gap-4"><input type="text" id="pCustAddr" placeholder="发货地址 (选填)" class="p-5 bg-slate-50 rounded-[22px] border-0 text-sm outline-none" autocomplete="off"><input type="text" id="pCustPhone" placeholder="联系电话 (选填)" class="p-5 bg-slate-50 rounded-[22px] border-0 text-sm outline-none" autocomplete="off"></div>
+                <input type="text" id="pName" placeholder="产品展示全称" class="w-full bg-slate-100 p-5 rounded-[22px] font-black border-0" autocomplete="off">
+                <div class="grid grid-cols-2 gap-4"><input type="text" id="pSku" placeholder="货号 SKU" class="p-5 bg-slate-50 rounded-[22px] border-0 font-mono tracking-widest" autocomplete="off"><input type="text" id="pPack" placeholder="规格 (片/包)" class="p-5 bg-slate-50 rounded-[22px] border-0" autocomplete="off"></div>
+                <div class="grid grid-cols-3 gap-4"><input type="number" id="pPrice" placeholder="结算单价" class="col-span-2 w-full bg-slate-100 p-5 rounded-[22px] font-black border-0 outline-none" autocomplete="off"><select id="pCurr" class="w-full bg-slate-100 p-5 rounded-[22px] border-0 outline-none font-black text-indigo-600"><option value="CNY">¥ CNY</option><option value="USD">$ USD</option></select></div>
+                <div class="grid grid-cols-2 gap-4"><input type="text" id="pSpec" placeholder="产品尺寸" class="p-5 bg-slate-50 rounded-[22px] border-0 outline-none" autocomplete="off"><input type="text" id="pMat" placeholder="材质工艺" class="p-5 bg-slate-50 rounded-[22px] border-0 outline-none" autocomplete="off"></div>
+                <textarea id="pNotes" placeholder="永久档案备注..." class="w-full bg-slate-50 p-5 rounded-[22px] h-24 border-0 font-bold outline-none" autocomplete="off"></textarea>
                 <div class="p-6 bg-indigo-50 rounded-[32px] border-2 border-dashed border-indigo-200 text-center"><label class="block text-[10px] font-black text-indigo-400 mb-2 uppercase tracking-widest">点击上传产品主图</label><input type="file" id="pImage" accept="image/*" class="text-xs text-slate-400 mx-auto"></div>
                 <button onclick="doSaveProduct()" id="btnSaveProd" class="w-full bg-indigo-600 text-white py-6 rounded-[24px] font-black text-xl shadow-2xl active:scale-95 transition-all shadow-indigo-200">确认并保存档案</button>
                 <button onclick="closeModal('prodModal')" class="w-full text-slate-400 font-bold text-sm py-4">取消操作并退出</button>
@@ -303,21 +303,21 @@
                 <div id="oldPBox"><select id="tProd" class="w-full bg-slate-100 p-6 rounded-[24px] font-black border-0 outline-none"></select></div>
                 <div id="newPBox" class="hidden space-y-4 p-6 bg-slate-50 rounded-[32px] border border-indigo-100 shadow-inner">
                     <div class="grid grid-cols-2 gap-3"><select id="qCat" onchange="updateDynamicHints('q')" class="p-5 rounded-2xl bg-white border-0 font-black outline-none"></select><select id="qFact" class="p-5 rounded-2xl bg-white border-0 font-black outline-none"></select></div>
-                    <input type="text" id="qCust" list="customerDataList" placeholder="所属客户" class="w-full p-5 rounded-2xl bg-white font-black border-0 outline-none">
-                    <div class="grid grid-cols-2 gap-2"><input type="text" id="qCustAddr" placeholder="地址(选填)" class="p-5 rounded-2xl bg-slate-50 border-0 text-sm outline-none"><input type="text" id="qCustPhone" placeholder="电话(选填)" class="p-5 rounded-2xl bg-slate-50 border-0 text-sm outline-none"></div>
-                    <input type="text" id="qName" placeholder="产品展示全名" class="w-full p-5 rounded-2xl bg-white font-black border-0 outline-none">
-                    <div class="grid grid-cols-3 gap-2"><input type="number" id="qPrice" placeholder="单价" class="col-span-2 p-5 rounded-2xl bg-white border-0 outline-none"><select id="qCurr" class="p-5 rounded-2xl bg-white border-0 font-black outline-none"><option value="CNY">¥</option><option value="USD">$</option></select></div>
-                    <div class="grid grid-cols-2 gap-2"><input type="text" id="qSku" placeholder="货号 SKU" class="p-5 rounded-2xl bg-white border-0 outline-none font-mono tracking-widest"><input type="text" id="qPack" placeholder="包装规格" class="p-5 rounded-2xl bg-white border-0 outline-none"></div>
-                    <div class="grid grid-cols-2 gap-2"><input type="text" id="qSpec" placeholder="产品尺寸" class="p-5 rounded-2xl bg-white border-0 outline-none"><input type="text" id="qMat" placeholder="材质工艺" class="p-5 rounded-2xl bg-white border-0 outline-none"></div>
+                    <input type="text" id="qCust" list="customerDataList" placeholder="所属客户" class="w-full p-5 rounded-2xl bg-white font-black border-0 outline-none" autocomplete="off">
+                    <div class="grid grid-cols-2 gap-2"><input type="text" id="qCustAddr" placeholder="地址(选填)" class="p-5 rounded-2xl bg-slate-50 border-0 text-sm outline-none" autocomplete="off"><input type="text" id="qCustPhone" placeholder="电话(选填)" class="p-5 rounded-2xl bg-slate-50 border-0 text-sm outline-none" autocomplete="off"></div>
+                    <input type="text" id="qName" placeholder="产品展示全名" class="w-full p-5 rounded-2xl bg-white font-black border-0 outline-none" autocomplete="off">
+                    <div class="grid grid-cols-3 gap-2"><input type="number" id="qPrice" placeholder="单价" class="col-span-2 p-5 rounded-2xl bg-white border-0 outline-none" autocomplete="off"><select id="qCurr" class="p-5 rounded-2xl bg-white border-0 font-black outline-none"><option value="CNY">¥</option><option value="USD">$</option></select></div>
+                    <div class="grid grid-cols-2 gap-2"><input type="text" id="qSku" placeholder="货号 SKU" class="p-5 rounded-2xl bg-white border-0 outline-none font-mono tracking-widest" autocomplete="off"><input type="text" id="qPack" placeholder="包装规格" class="p-5 rounded-2xl bg-white border-0 outline-none" autocomplete="off"></div>
+                    <div class="grid grid-cols-2 gap-2"><input type="text" id="qSpec" placeholder="产品尺寸" class="p-5 rounded-2xl bg-white border-0 outline-none" autocomplete="off"><input type="text" id="qMat" placeholder="材质工艺" class="p-5 rounded-2xl bg-white border-0 outline-none" autocomplete="off"></div>
                     <div class="p-4 bg-white rounded-2xl border-2 border-dashed border-indigo-100 text-center">
                         <label class="block text-[10px] font-black text-indigo-400 mb-2 uppercase tracking-widest">上传产品档案主图</label>
                         <input type="file" id="qImage" accept="image/*" class="text-xs mx-auto">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4"><input type="text" id="tOrder" placeholder="关联订单号" class="p-5 rounded-[22px] bg-slate-100 border-0 outline-none font-bold"><input type="text" id="tLog" placeholder="物流追踪号" class="p-5 rounded-[22px] bg-slate-100 border-0 outline-none font-bold"></div>
-                <div class="flex space-x-4"><select id="tType" class="flex-1 p-6 rounded-[24px] font-black bg-slate-900 text-white border-0 outline-none"><option value="in">产品入库 (+)</option><option value="out">出库发货 (-)</option></select><input type="number" id="tQty" placeholder="数量(包)" class="flex-1 p-6 rounded-[24px] font-black bg-slate-100 border-0 outline-none text-center"></div>
+                <div class="grid grid-cols-2 gap-4"><input type="text" id="tOrder" placeholder="关联订单号" class="p-5 rounded-[22px] bg-slate-100 border-0 outline-none font-bold" autocomplete="off"><input type="text" id="tLog" placeholder="物流追踪号" class="p-5 rounded-[22px] bg-slate-100 border-0 outline-none font-bold" autocomplete="off"></div>
+                <div class="flex space-x-4"><select id="tType" class="flex-1 p-6 rounded-[24px] font-black bg-slate-900 text-white border-0 outline-none"><option value="in">产品入库 (+)</option><option value="out">出库发货 (-)</option></select><input type="number" id="tQty" placeholder="数量(包)" class="flex-1 p-6 rounded-[24px] font-black bg-slate-100 border-0 outline-none text-center" autocomplete="off"></div>
                 <div class="p-6 bg-slate-100 rounded-[28px] border-2 border-dashed border-slate-200 text-center"><label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">上传现场实拍照 (留档)</label><input type="file" id="tImage" accept="image/*" class="text-xs mx-auto"></div>
-                <textarea id="tNotes" placeholder="业务备注说明..." class="w-full bg-slate-100 p-6 rounded-[24px] h-24 border-0 font-bold outline-none"></textarea>
+                <textarea id="tNotes" placeholder="业务备注说明..." class="w-full bg-slate-100 p-6 rounded-[24px] h-24 border-0 font-bold outline-none" autocomplete="off"></textarea>
                 <button onclick="doSaveTrans()" id="btnSaveTrans" class="w-full bg-indigo-600 text-white py-6 rounded-[28px] font-black text-xl shadow-2xl active:scale-95 transition-all shadow-indigo-200">立即提交业务记录</button>
                 <button onclick="closeModal('transModal')" class="w-full text-slate-400 font-bold py-2">放弃并返回</button>
             </div>
@@ -333,11 +333,11 @@
     </div>
     
     <div id="factoryModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md">
-        <div class="bg-white w-full max-w-md rounded-[40px] p-10 shadow-2xl"><h3 class="text-2xl font-black mb-6 tracking-tighter text-center">新增代工厂档案</h3><div class="space-y-4"><input type="text" id="fName" placeholder="代工厂全称" class="w-full p-5 bg-slate-50 rounded-2xl border-0 outline-none"><input type="text" id="fAddr" placeholder="详细生产地址" class="w-full p-5 bg-slate-50 rounded-2xl border-0 outline-none"><button onclick="doSaveFactory()" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl active:scale-95 transition-all">保存工厂档案</button><button onclick="closeModal('factoryModal')" class="w-full text-slate-400 py-2 text-sm font-bold text-center w-full">取消操作</button></div></div>
+        <div class="bg-white w-full max-w-md rounded-[40px] p-10 shadow-2xl"><h3 class="text-2xl font-black mb-6 tracking-tighter text-center">新增代工厂档案</h3><div class="space-y-4"><input type="text" id="fName" placeholder="代工厂全称" class="w-full p-5 bg-slate-50 rounded-2xl border-0 outline-none" autocomplete="off"><input type="text" id="fAddr" placeholder="详细生产地址" class="w-full p-5 bg-slate-50 rounded-2xl border-0 outline-none" autocomplete="off"><button onclick="doSaveFactory()" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl active:scale-95 transition-all">保存工厂档案</button><button onclick="closeModal('factoryModal')" class="w-full text-slate-400 py-2 text-sm font-bold text-center w-full">取消操作</button></div></div>
     </div>
     
     <div id="customerModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md">
-        <div class="bg-white w-full max-w-md rounded-[40px] p-10 shadow-2xl"><h3 class="text-2xl font-black mb-6 tracking-tighter text-center">新增客户档案</h3><div class="space-y-4"><input type="text" id="cName" placeholder="客户姓名/公司名" class="w-full p-5 bg-slate-50 rounded-2xl border-0 outline-none"><input type="text" id="cAddr" placeholder="默认发货地址" class="w-full p-5 bg-slate-50 rounded-2xl border-0 outline-none"><input type="text" id="cPhone" placeholder="联系电话" class="w-full p-5 bg-slate-50 rounded-2xl border-0 outline-none"><button onclick="doSaveCustomer()" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl active:scale-95 transition-all">保存客户档案</button><button onclick="closeModal('customerModal')" class="w-full text-slate-400 py-2 text-sm font-bold text-center w-full">取消操作</button></div></div>
+        <div class="bg-white w-full max-w-md rounded-[40px] p-10 shadow-2xl"><h3 class="text-2xl font-black mb-6 tracking-tighter text-center">新增客户档案</h3><div class="space-y-4"><input type="text" id="cName" placeholder="客户姓名/公司名" class="w-full p-5 bg-slate-50 rounded-2xl border-0 outline-none" autocomplete="off"><input type="text" id="cAddr" placeholder="默认发货地址" class="w-full p-5 bg-slate-50 rounded-2xl border-0 outline-none" autocomplete="off"><input type="text" id="cPhone" placeholder="联系电话" class="w-full p-5 bg-slate-50 rounded-2xl border-0 outline-none" autocomplete="off"><button onclick="doSaveCustomer()" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl active:scale-95 transition-all">保存客户档案</button><button onclick="closeModal('customerModal')" class="w-full text-slate-400 py-2 text-sm font-bold text-center w-full">取消操作</button></div></div>
     </div>
 
     <script>
@@ -655,6 +655,28 @@
             } catch(e) { toast('❌ 保存失败：请检查数据完整性', 'bg-red-600'); } finally { btn.disabled = false; }
         }
 
+        
+        function resetTransModal() {
+            // 重置复选框
+            const isNew = getEl('isNew');
+            if(isNew) { isNew.checked = false; toggleQuickFields(); }
+            
+            // 清空下拉选择和基本输入
+            ['tProd', 'tQty', 'tOrder', 'tLog', 'tNotes', 'qName', 'qSku', 'qPrice', 'qPack', 'qSpec', 'qMat', 'qCust', 'qCustAddr', 'qCustPhone'].forEach(id => {
+                const el = getEl(id); if(el) el.value = '';
+            });
+            
+            // 重置文件上传
+            ['qImage', 'tImage'].forEach(id => {
+                const el = getEl(id); if(el) el.value = '';
+            });
+            
+            // 重置 Select 默认值
+            ['tType', 'qCurr', 'qCat', 'qFact'].forEach(id => {
+                const el = getEl(id); if(el && el.options[0]) el.selectedIndex = 0;
+            });
+        }
+
         async function doSaveTrans() {
             const btn = getEl('btnSaveTrans'); if(btn.disabled) return;
             const isN = getEl('isNew').checked;
@@ -682,7 +704,7 @@
                 // 强制同步本地 products 数组，确保渲染时能找到新产品
                 const finalInv = await api.get('/inventory');
                 products = finalInv.data;
-                closeModal('transModal'); renderTrans(); renderInventory(); toast('✅ 业务已成功入库', 'bg-emerald-600');
+                resetTransModal(); closeModal('transModal'); renderTrans(); renderInventory(); toast('✅ 业务已成功入库并已清空表单', 'bg-emerald-600');
             } catch (e) { toast('❌ 提交失败：请确保所有必填项已填写', 'bg-red-600'); } finally { btn.disabled = false; }
         }
 
