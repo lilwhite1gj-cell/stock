@@ -166,16 +166,16 @@
                         </div>
                         <div class="md:col-span-3 flex items-center space-x-3 bg-white px-6 py-4 rounded-[22px] shadow-sm border border-slate-100 self-end md:self-start"><span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sort By:</span><select id="invSortField" onchange="renderInventory()" class="bg-transparent outline-none font-black text-sm text-indigo-600"><option value="id">录入时间</option><option value="name">产品名称</option><option value="customerName">客户维度</option><option value="balance">库存量</option><option value="value">资产价值</option></select></div>
                     </div>
-                    <div class="hidden md:block glass-card table-container-fix overflow-x-auto">
+                    <div class="hidden md:block glass-card table-container-fix overflow-x-auto border border-slate-100">
                         <table class="w-full text-left border-collapse table-fixed min-w-[1000px]">
                             <thead class="bg-slate-50/50 border-b border-slate-100">
                                 <tr>
-                                    <th class="w-[18%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">产品名称</th>
-                                    <th class="w-[18%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">核心参数 (品类/尺寸/材质)</th>
-                                    <th class="w-[18%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">业务维度 (客户/工厂)</th>
+                                    <th class="w-[16%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">产品名称</th>
+                                    <th class="w-[16%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">参数 (品类/尺寸/材质)</th>
+                                    <th class="w-[16%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">维度 (客户/工厂)</th>
                                     <th class="w-[18%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">计价/库存</th>
-                                    <th class="w-[14%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">最后经办</th>
-                                    <th class="w-[14%] p-8 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">资产总额</th>
+                                    <th class="w-[10%] p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">最后经办</th>
+                                    <th class="w-[24%] p-8 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">资产总额 (实时)</th>
                                 </tr>
                             </thead>
                             <tbody id="invTable" class="divide-y divide-slate-50"></tbody>
@@ -571,7 +571,7 @@
                         <td class="p-8 text-center"><div class="flex flex-col items-center">${custTag}${factTag}</div></td>
                         <td class="p-8 text-center"><div class="space-y-1"><div class="text-sm font-bold text-slate-400 uppercase tracking-tighter">${formatMoney(p.unitPrice, p.currency)} <span class="opacity-30">(${p.currency})</span></div><div class="text-2xl md:text-3xl font-black text-slate-900 tracking-tighter">${p.balance} <span class="text-[10px] uppercase opacity-30 font-bold">Bags</span></div></div></td>
                         <td class="p-8 text-center text-xs font-black text-slate-400 uppercase tracking-widest">${p.creatorName||'SYSTEM'}</td>
-                        <td class="p-8 text-right font-black text-2xl md:text-3xl text-emerald-600 tracking-tighter">${formatMoney(p.balance * p.unitPrice, p.currency)}</td>
+                        <td class="p-8 text-right font-black text-lg xl:text-2xl text-emerald-600 tracking-tighter tabular-nums whitespace-nowrap overflow-hidden text-ellipsis">${formatMoney(p.balance * p.unitPrice, p.currency)}</td>
                     </tr>`;
                 }).join('');
                 getEl('invMobile').innerHTML = filtered.map(p => {
