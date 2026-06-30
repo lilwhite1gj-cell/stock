@@ -1149,7 +1149,33 @@
         }
 
         function openAddProdModal() { getEl('editProdId').value=''; ['pName','pSku','pPrice','pPack','pNotes','pCust','pCustAddr','pCustPhone','pMat','pSpec'].forEach(id => { const el = getEl(id); if(el) el.value=''; }); getEl('pCurr').value='CNY'; getEl('prodModalTitle').innerText = '档案录入'; openModal('prodModal'); updateDynamicHints('p'); }
-        function openEditModal(id) { const p = products.find(x => x.id === id); getEl('editProdId').value = p.id; ['pName','pSku','pPrice','pPack','pNotes','pCust','pCustAddr','pCustPhone','pMat','pSpec'].forEach(k => { const el = getEl(k); if(el) el.value = p[k.slice(1).charAt(0).toLowerCase() + k.slice(2)] || ''; }); getEl('pCat').value = p.category; getEl('pFact').value = p.factoryId; getEl('pCurr').value = p.currency || 'CNY'; getEl('prodModalTitle').innerText = '档案修改'; updateDynamicHints('p'); openModal('prodModal'); }
+        function openEditModal(id) { 
+            const p = products.find(x => x.id === id); 
+            getEl('editProdId').value = p.id; 
+            
+            // 显式映射字段，解决原有代码回填失败的问题
+            getEl('pName').value = p.name || '';
+            getEl('pSku').value = p.sku || '';
+            getEl('pPrice').value = p.unitPrice || '';
+            getEl('pPack').value = p.packaging || '';
+            getEl('pNotes').value = p.notes || '';
+            getEl('pCust').value = p.customerName || '';
+            getEl('pMat').value = p.material || '';
+            getEl('pSpec').value = p.spec || '';
+            
+            // 尝试从本地客户列表中匹配并回填联系信息
+            const cust = allCustomers.find(c => c.name === p.customerName);
+            getEl('pCustAddr').value = cust ? (cust.address || '') : '';
+            getEl('pCustPhone').value = cust ? (cust.phone || '') : '';
+
+            getEl('pCat').value = p.category || ''; 
+            getEl('pFact').value = p.factoryId || ''; 
+            getEl('pCurr').value = p.currency || 'CNY'; 
+            
+            getEl('prodModalTitle').innerText = '档案修改'; 
+            updateDynamicHints('p'); 
+            openModal('prodModal'); 
+        }
         function toggleQuickFields() { const isN = getEl('isNew').checked; getEl('oldPBox').classList.toggle('hidden', isN); getEl('newPBox').classList.toggle('hidden', !isN); if(isN) updateDynamicHints('q'); }
         function previewImg(u) { getEl('imgPreviewContent').src = u; getEl('imgPreviewOverlay').classList.remove('hidden'); }
         function updateProductSelects() { const el = getEl('tProd'); if(el) el.innerHTML = '<option value="" disabled selected>🔍 搜索并选择产品档案...</option>' + products.map(p => `<option value="${p.id}">${p.name}  /  ${p.sku}</option>`) .join(''); }

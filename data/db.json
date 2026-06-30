@@ -32,5 +32,13 @@
     "彩袋"
   ],
   "factories": [],
-  "customers": []
+  "customers": [
+    {
+      "name": "测试",
+      "address": "",
+      "phone": "",
+      "id": "1782801551248",
+      "createdBy": "1"
+    }
+  ]
 }
