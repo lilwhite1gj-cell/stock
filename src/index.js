@@ -211,18 +211,31 @@ app.post('/api/transactions', authenticate, upload.single('transImage'), async (
   await db.write(); res.status(201).json(t);
 });
 
-// --- 汇率缓存逻辑 ---
+// --- 汇率同步逻辑 ---
 let cachedRate = 7.25;
 let lastRateFetch = 0;
 app.get('/api/exchange-rate', async (req, res) => {
-  res.json({ rate: cachedRate });
-  if (Date.now() - lastRateFetch > 3600000) {
-    lastRateFetch = Date.now();
+  // 如果缓存超过 10 分钟，或者强制刷新请求，则尝试更新
+  if (Date.now() - lastRateFetch > 600000 || req.query.force === 'true') {
     try {
-      const r = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-      const d = await r.json(); if(d.rates?.CNY) cachedRate = d.rates.CNY;
-    } catch(e) {}
+      // 切换到更稳定的 API 源，并增加超时处理
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch('https://open.er-api.com/v6/latest/USD', { signal: controller.signal });
+      const data = await response.json();
+      
+      if (data && data.rates && data.rates.CNY) {
+        cachedRate = parseFloat(data.rates.CNY.toFixed(4));
+        lastRateFetch = Date.now();
+        console.log(`[ExchangeRate] Updated: 1 USD = ${cachedRate} CNY`);
+      }
+      clearTimeout(timeoutId);
+    } catch (e) {
+      console.error('[ExchangeRate] Fetch failed, using cache:', e.message);
+    }
   }
+  res.json({ rate: cachedRate, lastUpdate: lastRateFetch });
 });
 
 // --- 统计与档案辅助 ---
